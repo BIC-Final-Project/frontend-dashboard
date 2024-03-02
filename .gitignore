@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# production
+build
+
 # misc
 .DS_Store
 .env
