@@ -18,59 +18,108 @@ const GettingStarted = lazy(() => import('../pages/GettingStarted'))
 const DocFeatures = lazy(() => import('../pages/DocFeatures'))
 const DocComponents = lazy(() => import('../pages/DocComponents'))
 
+const DetailAset = lazy(() => import('../pages/protected/Aset/DetailAset'))
+const TambahAset = lazy(() => import('../pages/protected/Aset/TambahAset'))
+const TambahVendor = lazy(() => import('../pages/protected/Aset/TambahVendor'))
+
+const Perencanaan = lazy(() => import('../pages/protected/Perencanaan/DetailPerencanaan'))
+const TambahPerencanaan = lazy(() => import('../pages/protected/Perencanaan/TambahPerencanaan'))
+
+const Pemeliharaan = lazy(() => import('../pages/protected/Pemeliharaan/DetailPemeliharaan'))
+const PemeliharaanTambah = lazy(() => import('../pages/protected/Pemeliharaan/TambahPemeliharaan'))
+const PemeliharaanTambahDanger = lazy(() => import('../pages/protected/Pemeliharaan/TambahPemeliharaanDanger'))
+
+const Riwayat = lazy(() => import('../pages/protected/Riwayat/DetailRiwayat'))
+
 
 const routes = [
   {
     path: '/dashboard', // the url
-    component: Dashboard, // view rendered
+    component: Page404, // view rendered
   },
   {
     path: '/welcome', // the url
-    component: Welcome, // view rendered
+    component: Page404, // view rendered
   },
   {
     path: '/leads',
-    component: Leads,
+    component: Page404,
+  },
+  {
+    path: '/asset/detail-aset',
+    component: DetailAset,
+  },
+  {
+    path: '/asset/tambah-aset',
+    component: TambahAset,
+  },
+  {
+    path: '/asset/tambah-vendor',
+    component: TambahVendor,
+  },
+  {
+    path: '/perencanaan/detail',
+    component: Perencanaan,
+  },
+  {
+    path: '/perencanaan/pemeliharaan',
+    component: TambahPerencanaan,
+  },
+  {
+    path: '/pemeliharaan/detail',
+    component: Pemeliharaan,
+  },
+  {
+    path: '/pemeliharaan/tambah',
+    component: PemeliharaanTambah,
+  },
+  {
+    path: '/pemeliharaan/darurat',
+    component: PemeliharaanTambahDanger,
+  },
+  {
+    path: '/riwayat',
+    component: Riwayat,
   },
   {
     path: '/settings-team',
-    component: Team,
+    component: Page404,
   },
   {
     path: '/calendar',
-    component: Calendar,
+    component: Page404,
   },
   {
     path: '/transactions',
-    component: Transactions,
+    component: Page404,
   },
   {
     path: '/settings-profile',
-    component: ProfileSettings,
+    component: Page404,
   },
   {
     path: '/settings-billing',
-    component: Bills,
+    component: Page404,
   },
   {
     path: '/getting-started',
-    component: GettingStarted,
+    component: Page404,
   },
   {
     path: '/features',
-    component: DocFeatures,
+    component: Page404,
   },
   {
     path: '/components',
-    component: DocComponents,
+    component: Page404,
   },
   {
     path: '/integration',
-    component: Integration,
+    component: Page404,
   },
   {
     path: '/charts',
-    component: Charts,
+    component: Page404,
   },
   {
     path: '/404',

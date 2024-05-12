@@ -30,3 +30,22 @@
     height: 120px;
     animation: spin 2s linear infinite;
 }
+
+.date-picker {
+  width: 100% !important;
+}
+
+.loader {
+  border-top-color: #3498db; /* Warna biru sebagai aksen spinner */
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
