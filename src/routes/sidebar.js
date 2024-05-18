@@ -8,6 +8,10 @@ import BoltIcon from "@heroicons/react/24/outline/BoltIcon";
 import ChartBarIcon from "@heroicons/react/24/outline/ChartBarIcon";
 import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
 import DocumentDuplicateIcon from "@heroicons/react/24/outline/DocumentDuplicateIcon";
+import fileSearchIconPath from '../assets/icons/file-search.svg';
+import calendar from '../assets/icons/calendar.svg';
+import FilePlus from '../assets/icons/file-plus.svg';
+import compass from '../assets/icons/compass.svg';
 
 
 const iconClasses = `h-6 w-6`;
@@ -72,7 +76,7 @@ const routes = [
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <BoltIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={compass} className={`${iconClasses} inline`} />, // icon component
     name: "Kelola Aset", // name that appear in Sidebar
     submenu: [
       {
@@ -94,7 +98,7 @@ const routes = [
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <CodeBracketSquareIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={FilePlus} className={`${iconClasses} inline`} />, // icon component
     name: "Perencanaan Aset", // name that appear in Sidebar
     submenu: [
       {
@@ -111,7 +115,7 @@ const routes = [
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <Cog6ToothIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={calendar} className={`${iconClasses} inline`} />, // icon component
     name: "Pemeliharaan Aset", // name that appear in Sidebar
     submenu: [
       {
@@ -133,9 +137,10 @@ const routes = [
   },
   {
     path: "/app/riwayat", // url
-    icon: <ChartBarIcon className={iconClasses} />, // icon component
+    icon: <img src={fileSearchIconPath} className={iconClasses} alt="File Search Icon" />, // icon component
     name: "Riwayat Aset", // name that appear in Sidebar
-  },
+  }
+  
   // {
   //   path: "", //no url needed as this has submenu
   //   icon: <DocumentTextIcon className={`${iconClasses} inline`} />, // icon component

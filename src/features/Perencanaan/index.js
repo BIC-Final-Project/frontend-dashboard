@@ -3,9 +3,13 @@ import axios from "axios";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
+import CardInput from "../../components/Cards/CardInput"; // Pastikan Anda mengimpor komponen CardInput
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 
 function DesignAset() {
   const [assets, setAssets] = useState([]);
@@ -16,6 +20,19 @@ function DesignAset() {
     message: "",
     type: "",
     id: null,
+  });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    namaAset: "",
+    kondisiAset: "",
+    usiaAsetSaatIni: "",
+    maksimalUsiaAset: "",
+    tahunProduksi: "",
+    deskripsiKerusakan: "",
+    tanggalRencanaPemeliharaan: new Date(),
+    statusPerencanaan: "",
+    vendorPengelola: "",
+    infoVendor: "",
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,7 +80,6 @@ function DesignAset() {
         age: 4,
         status: "Non-Aktif",
       },
-      // Tambahkan lebih banyak data dummy sesuai kebutuhan
     ];
     setAssets(dummyAssets);
     setTotalPages(1);
@@ -78,8 +94,28 @@ function DesignAset() {
     });
   };
 
+  const handleEditAsset = (asset) => {
+    setEditFormData({
+      namaAset: asset.name,
+      kondisiAset: asset.condition,
+      usiaAsetSaatIni: asset.age,
+      maksimalUsiaAset: "", // Sesuaikan dengan data yang ada
+      tahunProduksi: "", // Sesuaikan dengan data yang ada
+      deskripsiKerusakan: "", // Sesuaikan dengan data yang ada
+      tanggalRencanaPemeliharaan: new Date(asset.dateEntered),
+      statusPerencanaan: asset.status,
+      vendorPengelola: asset.vendorName,
+      infoVendor: "", // Sesuaikan dengan data yang ada
+    });
+    setIsEditModalOpen(true);
+  };
+
   const closeDialog = () => {
     setModal({ isOpen: false, id: null });
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
   };
 
   const confirmDelete = async () => {
@@ -95,6 +131,21 @@ function DesignAset() {
       enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
     }
     closeDialog();
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
+
+  const handleDateChange = (name, date) => {
+    setEditFormData({ ...editFormData, [name]: date });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Tambahkan logika untuk menyimpan data aset yang diubah
+    closeEditModal();
   };
 
   const goToNextPage = () => {
@@ -156,7 +207,7 @@ function DesignAset() {
                     </button>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => console.log("Edit", asset.id)} // Tambahkan fungsi edit di sini
+                      onClick={() => handleEditAsset(asset)}
                     >
                       <PencilIcon className="w-5 h-5" />
                     </button>
@@ -193,6 +244,192 @@ function DesignAset() {
         onClose={closeDialog}
         onConfirm={confirmDelete}
       />
+
+      <div
+        className={`modal ${isEditModalOpen ? "modal-open" : ""}`}
+        onClick={closeEditModal}
+      >
+        <div
+          className="modal-box relative max-w-4xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <form onSubmit={handleSubmit}>
+            {/* Bagian Identitas Aset */}
+            <CardInput title="Identitas Aset">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="namaAset" className="block font-medium">
+                    Nama Aset *
+                  </label>
+                  <select
+                    id="namaAset"
+                    name="namaAset"
+                    value={editFormData.namaAset}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option>Pilih Aset Rencana pemeliharaan</option>
+                    <option value="Aset1">Aset 1</option>
+                    <option value="Aset2">Aset 2</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="kondisiAset" className="block font-medium">
+                    Kondisi Aset *
+                  </label>
+                  <select
+                    id="kondisiAset"
+                    name="kondisiAset"
+                    value={editFormData.kondisiAset}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option>Pilih jenis kondisi aset</option>
+                    <option value="Baik">Baik</option>
+                    <option value="Rusak">Rusak</option>
+                  </select>
+                </div>
+              </div>
+            </CardInput>
+
+            {/* Bagian Detail Aset */}
+            <CardInput title="Detail Aset" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="usiaAsetSaatIni" className="block font-medium">
+                    Usia Aset Saat Ini *
+                  </label>
+                  <input
+                    type="text"
+                    id="usiaAsetSaatIni"
+                    name="usiaAsetSaatIni"
+                    value={editFormData.usiaAsetSaatIni}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan usia aset saat ini"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="maksimalUsiaAset" className="block font-medium">
+                    Maksimal Usia Aset *
+                  </label>
+                  <input
+                    type="text"
+                    id="maksimalUsiaAset"
+                    name="maksimalUsiaAset"
+                    value={editFormData.maksimalUsiaAset}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan maksimal usia aset"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tahunProduksi" className="block font-medium">
+                    Tahun Produksi
+                  </label>
+                  <input
+                    type="text"
+                    id="tahunProduksi"
+                    name="tahunProduksi"
+                    value={editFormData.tahunProduksi}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan tahun produksi"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="deskripsiKerusakan" className="block font-medium">
+                    Deskripsi Kerusakan
+                  </label>
+                  <input
+                    type="text"
+                    id="deskripsiKerusakan"
+                    name="deskripsiKerusakan"
+                    value={editFormData.deskripsiKerusakan}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan Deskripsi Kerusakan"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tanggalRencanaPemeliharaan" className="block font-medium">
+                    Tanggal Rencana Pemeliharaan *
+                  </label>
+                  <DatePicker
+                    selected={editFormData.tanggalRencanaPemeliharaan}
+                    onChange={(date) => handleDateChange('tanggalRencanaPemeliharaan', date)}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
+                    wrapperClassName="date-picker"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="statusPerencanaan" className="block font-medium">
+                    Status Perencanaan *
+                  </label>
+                  <select
+                    id="statusPerencanaan"
+                    name="statusPerencanaan"
+                    value={editFormData.statusPerencanaan}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option>Pilih status perencanaan</option>
+                    <option value="direncanakan">Direncanakan</option>
+                    <option value="dilaksanakan">Dilaksanakan</option>
+                    <option value="selesai">Selesai</option>
+                  </select>
+                </div>
+              </div>
+            </CardInput>
+
+            {/* Bagian Informasi Vendor */}
+            <CardInput title="Informasi Vendor" className="mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="vendorPengelola" className="block font-medium">
+                    Vendor Pengelola *
+                  </label>
+                  <select
+                    id="vendorPengelola"
+                    name="vendorPengelola"
+                    value={editFormData.vendorPengelola}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option>Pilih vendor</option>
+                    <option value="Vendor1">Vendor 1</option>
+                    <option value="Vendor2">Vendor 2</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="infoVendor" className="block font-medium">
+                    Informasi Vendor / No Telepon
+                  </label>
+                  <input
+                    type="text"
+                    id="infoVendor"
+                    name="infoVendor"
+                    value={editFormData.infoVendor}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan informasi vendor"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+              </div>
+            </CardInput>
+
+            <div className="flex justify-end mt-4">
+              <button
+                type="submit"
+                className="btn px-6 btn-sm normal-case btn-primary"
+              >
+                Simpan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </>
   );
 }

@@ -7,7 +7,7 @@ function InternalPage(){
     const dispatch = useDispatch()
 
     useEffect(() => {
-        dispatch(setPageTitle({ title : "Pemeliharaan"}))
+        dispatch(setPageTitle({ title : "Tambahkan Pemeliharaan"}))
       }, [])
 
 
