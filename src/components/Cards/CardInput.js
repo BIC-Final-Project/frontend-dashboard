@@ -3,10 +3,10 @@ import React from 'react';
 const CardInput = ({ title, children }) => {
   return (
     <div className="mb-8">
-      <div className="bg-gray-700 p-2 rounded">
-        <h2 className="text-lg">{title}</h2>
+      <div className="bg-[#B9C7C0] p-2 rounded">
+        <h2 className="text-lg font-semibold">{title}</h2>
       </div>
-      <div className="border border-gray-700 p-5 rounded">
+      <div className="border border-[#B9C7C0] p-5 rounded">
         {children}
       </div>
     </div>

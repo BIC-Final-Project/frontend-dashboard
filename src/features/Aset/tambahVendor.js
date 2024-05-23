@@ -4,6 +4,7 @@ import axios from 'axios';
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import Button from "../../components/Button";
 
 function TambahVendor() {
   const { enqueueSnackbar } = useSnackbar();
@@ -103,12 +104,10 @@ function TambahVendor() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <button
-            type="submit"
-            className="btn px-6 btn-sm normal-case btn-primary"
-          >
-            Simpan Vendor
-          </button>
+        <Button
+            label="Simpan Aset"
+            onClick={() => {}}
+          />
         </div>
       </form>
     </TitleCard>

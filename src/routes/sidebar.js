@@ -12,6 +12,11 @@ import fileSearchIconPath from '../assets/icons/file-search.svg';
 import calendar from '../assets/icons/calendar.svg';
 import FilePlus from '../assets/icons/file-plus.svg';
 import compass from '../assets/icons/compass.svg';
+import dashboard from '../assets/icons/dashboard.svg';
+import membership from '../assets/icons/membership.svg';
+import fasilitas from '../assets/icons/fasilitas.svg';
+import bookingfasilitas from '../assets/icons/booking-fasilitas.svg';
+
 
 
 const iconClasses = `h-6 w-6`;
@@ -20,12 +25,12 @@ const submenuIconClasses = `h-5 w-5`;
 const routes = [
   {
     path: "/app/dashboard",
-    icon: <Squares2X2Icon className={iconClasses} />,
+    icon: <img src={dashboard} className={iconClasses} />,
     name: "Dashboard",
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <UsersIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={membership} className={`${iconClasses} inline`} />, // icon component
     name: "Membership", // name that appear in Sidebar
     submenu: [
       {
@@ -42,7 +47,7 @@ const routes = [
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <CalendarDaysIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={bookingfasilitas} className={`${iconClasses} inline`} />, // icon component
     name: "Booking Fasilitas", // name that appear in Sidebar
     submenu: [
       {
@@ -59,7 +64,7 @@ const routes = [
   },
   {
     path: "", //no url needed as this has submenu
-    icon: <DocumentDuplicateIcon className={`${iconClasses} inline`} />, // icon component
+    icon: <img src={fasilitas} className={`${iconClasses} inline`} />, // icon component
     name: "Fasilitas", // name that appear in Sidebar
     submenu: [
       {
@@ -83,6 +88,11 @@ const routes = [
         path: "/app/asset/detail-aset",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Detail Aset",
+      },
+      {
+        path: "/app/asset/detail-vendor",
+        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
+        name: "Detail Vendor",
       },
       {
         path: "/app/asset/tambah-aset",

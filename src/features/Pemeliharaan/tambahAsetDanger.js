@@ -5,6 +5,7 @@ import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Button from "../../components/Button";
 
 function TambahAsetDanger() {
   const { enqueueSnackbar } = useSnackbar();
@@ -253,12 +254,10 @@ function TambahAsetDanger() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <button
-            type="submit"
-            className="btn px-6 btn-sm normal-case btn-primary"
-          >
-            Simpan
-          </button>
+        <Button
+            label="Simpan"
+            onClick={() => {}}
+          />
         </div>
       </form>
     </TitleCard>

@@ -5,6 +5,7 @@ import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Button from "../../components/Button";
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
@@ -265,12 +266,10 @@ function TambahAset() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <button
-            type="submit"
-            className="btn px-6 btn-sm normal-case btn-primary"
-          >
-            Simpan Aset
-          </button>
+          <Button
+            label="Simpan Aset"
+            onClick={() => {}}
+          />
         </div>
       </form>
     </TitleCard>

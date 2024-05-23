@@ -19,6 +19,7 @@ const DocFeatures = lazy(() => import('../pages/DocFeatures'))
 const DocComponents = lazy(() => import('../pages/DocComponents'))
 
 const DetailAset = lazy(() => import('../pages/protected/Aset/DetailAset'))
+const DetailVendor = lazy(() => import('../pages/protected/Aset/DetailVendor'))
 const TambahAset = lazy(() => import('../pages/protected/Aset/TambahAset'))
 const TambahVendor = lazy(() => import('../pages/protected/Aset/TambahVendor'))
 
@@ -48,6 +49,10 @@ const routes = [
   {
     path: '/asset/detail-aset',
     component: DetailAset,
+  },
+  {
+    path: '/asset/detail-vendor',
+    component: DetailVendor,
   },
   {
     path: '/asset/tambah-aset',

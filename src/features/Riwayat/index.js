@@ -5,9 +5,10 @@ import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
 import EyeIcon from "@heroicons/react/24/outline/EyeIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
-
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { FunnelIcon } from '@heroicons/react/24/outline'; // Gunakan ikon yang sesuai
 
 function RiwayatAset() {
   const [assets, setAssets] = useState([]);
@@ -17,6 +18,11 @@ function RiwayatAset() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterConditions, setFilterConditions] = useState({
+    kondisi: "",
+    status: "",
+  });
 
   const [formData, setFormData] = useState({
     namaAset: "",
@@ -120,17 +126,71 @@ function RiwayatAset() {
     }
   };
 
+  const handleFilterClick = () => {
+    setIsFilterOpen(!isFilterOpen);
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterConditions((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
   return (
     <>
       <TitleCard title="Riwayat Pemeliharaan Aset" topMargin="mt-2">
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between items-center relative">
           <input
             type="text"
-            placeholder="Cari aset..."
+            placeholder="Cari Riwayat Pemeliharaan Aset"
             className="input input-bordered w-full max-w-xs"
             value={searchQuery}
             onChange={handleSearchChange}
           />
+          <button className="btn btn-white flex items-center" onClick={handleFilterClick}>
+            <FunnelIcon className="w-5 h-5 mr-2" />
+            Tambahkan Filter
+          </button>
+          {isFilterOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white shadow-lg rounded-lg z-10">
+              <div className="p-4">
+                <div className="mb-2">
+                  <label htmlFor="kondisi" className="block font-medium">
+                    Kondisi
+                  </label>
+                  <select
+                    id="kondisi"
+                    name="kondisi"
+                    value={filterConditions.kondisi}
+                    onChange={handleFilterChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option value="">Pilih Kondisi</option>
+                    <option value="Baik">Baik</option>
+                    <option value="Rusak">Rusak</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="status" className="block font-medium">
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={filterConditions.status}
+                    onChange={handleFilterChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option value="">Pilih Status</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
@@ -177,7 +237,7 @@ function RiwayatAset() {
               Sebelumnya
             </button>
             <button
-              className="btn"
+              className="btn ml-5"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
@@ -235,7 +295,6 @@ function RiwayatAset() {
             </div>
           </CardInput>
 
-          {/* Bagian Detail Aset menggunakan CardInput */}
           <CardInput title="Detail Aset">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -281,10 +340,7 @@ function RiwayatAset() {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="deskripsiKerusakan"
-                  className="block font-medium"
-                >
+                <label htmlFor="deskripsiKerusakan" className="block font-medium">
                   Deskripsi Kerusakan
                 </label>
                 <input
@@ -315,10 +371,7 @@ function RiwayatAset() {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="statusPerencanaan"
-                  className="block font-medium"
-                >
+                <label htmlFor="statusPerencanaan" className="block font-medium">
                   Status Perencanaan *
                 </label>
                 <select
@@ -337,7 +390,6 @@ function RiwayatAset() {
             </div>
           </CardInput>
 
-          {/* Bagian Informasi Vendor menggunakan CardInput */}
           <CardInput title="Informasi Vendor">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

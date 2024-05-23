@@ -9,6 +9,7 @@ import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Button from "../../components/Button";
 
 
 function DesignAset() {
@@ -227,7 +228,7 @@ function DesignAset() {
               Previous
             </button>
             <button
-              className="btn"
+              className="btn ml-5"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
@@ -420,12 +421,10 @@ function DesignAset() {
             </CardInput>
 
             <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                className="btn px-6 btn-sm normal-case btn-primary"
-              >
-                Simpan
-              </button>
+            <Button
+            label="Simpan"
+            onClick={() => {}}
+          />
             </div>
           </form>
         </div>

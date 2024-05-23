@@ -24,6 +24,9 @@ const token = checkAuth()
 function App() {
 
   useEffect(() => {
+    if (!localStorage.getItem('theme')) {
+      localStorage.setItem('theme', 'light');
+    }
     // 👆 daisy UI themes initialization
     themeChange(false)
   }, [])

@@ -1,9 +1,10 @@
+import React from 'react';
 import routes from '../routes/sidebar';
-import { NavLink, Routes, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import SidebarSubmenu from './SidebarSubmenu';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { useDispatch } from 'react-redux';
-import logoPath from '../assets/icons/Logo.svg';  // Import logo sebagai path
+import logoPath from '../assets/icons/Logo.svg';
 
 function LeftSidebar() {
     const location = useLocation();
@@ -51,6 +52,20 @@ function LeftSidebar() {
                         )}
                     </li>
                 ))}
+                {/* Add profile section at the bottom */}
+                <li className="mt-auto p-4">
+                    <div className="flex items-center">
+                        <div className="avatar">
+                            <div className="rounded-full w-10 h-10 m-1">
+                                <img src="https://placehold.jp/150x150.png" alt="Admin" />
+                            </div>
+                        </div>
+                        <div className="ml-4">
+                            <div className="text-sm font-semibold">Admin</div>
+                            <div className="text-xs text-gray-600">BIC@gmail.com</div>
+                        </div>
+                    </div>
+                </li>
             </ul>
         </div>
     );
