@@ -19,6 +19,8 @@ function TambahAset() {
     infoVendor: "",
     jumlahAsetMasuk: "",
     tanggalAsetMasuk: new Date(),
+    tanggalGaransiMulai: new Date(), // Tambahkan state untuk tanggal mulai garansi
+    tanggalGaransiBerakhir: new Date() // Tambahkan state untuk tanggal berakhir garansi
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState("");
@@ -47,10 +49,9 @@ function TambahAset() {
     }
   };
 
-  const handleDateChange = (date) => {
-    setFormData((prev) => ({ ...prev, tanggalAsetMasuk: date }));
+  const handleDateChange = (date, fieldName) => {
+    setFormData((prev) => ({ ...prev, [fieldName]: date }));
   };
-
   return (
     <TitleCard title="Tambah Aset" topMargin="mt-2">
       <form onSubmit={handleSubmit}>
@@ -147,6 +148,40 @@ function TambahAset() {
                 onChange={handleInputChange}
                 placeholder="Masukkan Deskripsi Aset"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="tanggalGaransiMulai"
+                className="block font-medium"
+              >
+                Masa Garansi Aset Dimulai
+              </label>
+              <DatePicker
+                selected={formData.tanggalGaransiMulai}
+                onChange={(date) =>
+                  handleDateChange(date, "tanggalGaransiMulai")
+                }
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                dateFormat="MMMM d, yyyy"
+                wrapperClassName="date-picker"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="tanggalGaransiBerakhir"
+                className="block font-medium"
+              >
+                Masa Garansi Aset Berakhir
+              </label>
+              <DatePicker
+                selected={formData.tanggalGaransiBerakhir}
+                onChange={(date) =>
+                  handleDateChange(date, "tanggalGaransiBerakhir")
+                }
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                dateFormat="MMMM d, yyyy"
+                wrapperClassName="date-picker"
               />
             </div>
           </div>
@@ -266,10 +301,7 @@ function TambahAset() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <Button
-            label="Simpan Aset"
-            onClick={() => {}}
-          />
+          <Button label="Simpan Aset" onClick={() => {}} />
         </div>
       </form>
     </TitleCard>

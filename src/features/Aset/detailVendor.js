@@ -28,6 +28,7 @@ function DetailVendor() {
     jenisVendor: "",
   });
   const { enqueueSnackbar } = useSnackbar();
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchVendors(currentPage);
@@ -157,9 +158,22 @@ function DetailVendor() {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
   return (
     <>
       <TitleCard title="Detail Vendor" topMargin="mt-2">
+      <div className="mb-4 flex justify-between items-center relative">
+      <input
+            type="text"
+            placeholder="Cari Riwayat Pemeliharaan Aset"
+            className="input input-bordered w-full max-w-xs"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+      </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
             <thead>

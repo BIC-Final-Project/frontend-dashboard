@@ -36,6 +36,8 @@ function DetailAset() {
   });
   const [imagePreview, setImagePreview] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   useEffect(() => {
     fetchAssets(currentPage);
@@ -98,16 +100,19 @@ function DetailAset() {
 
   const handleEditAsset = (asset) => {
     setEditFormData({
+      ...editFormData,
       namaAset: asset.name,
       kategoriAset: asset.category,
       merekAset: asset.vendorName,
-      noSeri: "",
-      tahunProduksi: "",
-      deskripsiAset: "",
+      noSeri: asset.serialNumber,
+      tahunProduksi: asset.productionYear,
+      deskripsiAset: asset.description,
       namaVendor: asset.vendorName,
       jumlahAsetMasuk: asset.quantity,
-      infoVendor: "",
+      infoVendor: asset.vendorInfo,
       tanggalAsetMasuk: new Date(asset.dateEntered),
+      tanggalGaransiMulai: new Date(asset.warrantyStart),
+      tanggalGaransiBerakhir: new Date(asset.warrantyEnd),
     });
     setImagePreview(asset.image);
     setIsEditModalOpen(true);
@@ -169,17 +174,35 @@ function DetailAset() {
       setCurrentPage(currentPage - 1);
     }
   };
+  
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+  
 
   return (
     <>
       <TitleCard title="Detail Aset" topMargin="mt-2">
+      <div className="mb-4 flex justify-between items-center relative">
+      <input
+            type="text"
+            placeholder="Cari Riwayat Pemeliharaan Aset"
+            className="input input-bordered w-full max-w-xs"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+      </div>
+      
         <div className="overflow-x-auto w-full">
+        
           <table className="table w-full">
             <thead>
               <tr>
                 <th>Foto Aset</th>
                 <th>Nama Aset</th>
                 <th>Tgl Aset Masuk</th>
+                <th>Masa Garansi Dimulai</th>
+                <th>Masa Garansi Berakhir</th>
                 <th>Nama Vendor</th>
                 <th>Kategori</th>
                 <th>Jumlah Aset</th>
@@ -198,6 +221,8 @@ function DetailAset() {
                   </td>
                   <td>{asset.name}</td>
                   <td>{moment(asset.dateEntered).format("DD MMM YYYY")}</td>
+                  <td>{moment(asset.warrantyStart).format("DD MMM YYYY")}</td>
+                  <td>{moment(asset.warrantyEnd).format("DD MMM YYYY")}</td>
                   <td>{asset.vendorName}</td>
                   <td>{asset.category}</td>
                   <td>{asset.quantity}</td>
@@ -350,6 +375,40 @@ function DetailAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
+                <div>
+                  <label
+                    htmlFor="tanggalGaransiMulai"
+                    className="block font-medium"
+                  >
+                    Masa Garansi Dimulai
+                  </label>
+                  <DatePicker
+                    selected={editFormData.tanggalGaransiMulai}
+                    onChange={(date) =>
+                      handleDateChange(date, "tanggalGaransiMulai")
+                    }
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
+                    wrapperClassName="date-picker"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="tanggalGaransiBerakhir"
+                    className="block font-medium"
+                  >
+                    Masa Garansi Berakhir
+                  </label>
+                  <DatePicker
+                    selected={editFormData.tanggalGaransiBerakhir}
+                    onChange={(date) =>
+                      handleDateChange(date, "tanggalGaransiBerakhir")
+                    }
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
+                    wrapperClassName="date-picker"
+                  />
+                </div>
               </div>
             </CardInput>
 
@@ -470,10 +529,7 @@ function DetailAset() {
             </CardInput>
 
             <div className="flex justify-end mt-4">
-            <Button
-            label="Simpan"
-            onClick={() => {}}
-          />
+              <Button label="Simpan" onClick={() => {}} />
             </div>
           </form>
         </div>

@@ -85,16 +85,6 @@ const routes = [
     name: "Kelola Aset", // name that appear in Sidebar
     submenu: [
       {
-        path: "/app/asset/detail-aset",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Detail Aset",
-      },
-      {
-        path: "/app/asset/detail-vendor",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Detail Vendor",
-      },
-      {
         path: "/app/asset/tambah-aset",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Tambah Aset",
@@ -104,6 +94,16 @@ const routes = [
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Tambah Vendor",
       },
+      {
+        path: "/app/asset/detail-aset",
+        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
+        name: "Detail Aset",
+      },
+      {
+        path: "/app/asset/detail-vendor",
+        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
+        name: "Detail Vendor",
+      },
     ],
   },
   {
@@ -112,15 +112,16 @@ const routes = [
     name: "Perencanaan Aset", // name that appear in Sidebar
     submenu: [
       {
-        path: "/app/perencanaan/detail",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Detail Perencanaan Aset",
-      },
-      {
         path: "/app/perencanaan/pemeliharaan",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Rencana Pemeliharaan",
       },
+      {
+        path: "/app/perencanaan/detail",
+        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
+        name: "Detail Perencanaan Aset",
+      },
+      
     ],
   },
   {
@@ -128,11 +129,6 @@ const routes = [
     icon: <img src={calendar} className={`${iconClasses} inline`} />, // icon component
     name: "Pemeliharaan Aset", // name that appear in Sidebar
     submenu: [
-      {
-        path: "/app/pemeliharaan/detail",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Detail Pemeliharaan",
-      },
       {
         path: "/app/pemeliharaan/tambah",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
@@ -142,6 +138,11 @@ const routes = [
         path: "/app/pemeliharaan/darurat",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Pemeliharaan Darurat",
+      },
+      {
+        path: "/app/pemeliharaan/detail",
+        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
+        name: "Detail Pemeliharaan",
       },
     ],
   },
