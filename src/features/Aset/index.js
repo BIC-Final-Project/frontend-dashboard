@@ -99,24 +99,33 @@ function DetailAset() {
   };
 
   const handleEditAsset = (asset) => {
+    console.log("Editing asset: ", asset);
+    
+    const parseDate = (dateString) => {
+      return dateString ? new Date(dateString) : new Date();
+    };
+  
     setEditFormData({
       ...editFormData,
       namaAset: asset.name,
       kategoriAset: asset.category,
       merekAset: asset.vendorName,
-      noSeri: asset.serialNumber,
-      tahunProduksi: asset.productionYear,
-      deskripsiAset: asset.description,
+      noSeri: asset.serialNumber || "",
+      tahunProduksi: asset.productionYear || "",
+      deskripsiAset: asset.description || "",
       namaVendor: asset.vendorName,
-      jumlahAsetMasuk: asset.quantity,
-      infoVendor: asset.vendorInfo,
-      tanggalAsetMasuk: new Date(asset.dateEntered),
-      tanggalGaransiMulai: new Date(asset.warrantyStart),
-      tanggalGaransiBerakhir: new Date(asset.warrantyEnd),
+      jumlahAsetMasuk: asset.quantity || "",
+      infoVendor: asset.vendorInfo || "",
+      tanggalAsetMasuk: parseDate(asset.dateEntered),
+      tanggalGaransiMulai: parseDate(asset.warrantyStart),
+      tanggalGaransiBerakhir: parseDate(asset.warrantyEnd),
     });
+  
     setImagePreview(asset.image);
     setIsEditModalOpen(true);
   };
+  
+  
 
   const closeDialog = () => {
     setModal({ isOpen: false, id: null });

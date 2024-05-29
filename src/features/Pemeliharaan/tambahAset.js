@@ -22,6 +22,8 @@ function TambahAset() {
     infoVendor: "",
     namaPenanggungJawab: "",
     deskripsiPemeliharaan: "",
+    tanggalPemeliharaan: new Date(),
+    perkiraanWaktuPemeliharaan: "",
   });
 
   const handleInputChange = (event) => {
@@ -29,8 +31,8 @@ function TambahAset() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (date) => {
-    setFormData((prev) => ({ ...prev, tanggalPemeliharaanAset: date }));
+  const handleDateChange = (date, name) => {
+    setFormData((prev) => ({ ...prev, [name]: date }));
   };
 
   const handleSubmit = async (event) => {
@@ -152,7 +154,7 @@ function TambahAset() {
               </label>
               <DatePicker
                 selected={formData.tanggalPemeliharaanAset}
-                onChange={handleDateChange}
+                onChange={(date) => handleDateChange(date, "tanggalPemeliharaanAset")}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 wrapperClassName="date-picker"
                 dateFormat="MMMM d, yyyy"
@@ -218,10 +220,7 @@ function TambahAset() {
         <CardInput title="Informasi Pemeliharaan">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="namaPenanggungJawab"
-                className="block font-medium"
-              >
+              <label htmlFor="namaPenanggungJawab" className="block font-medium">
                 Nama Penanggung Jawab
               </label>
               <input
@@ -235,10 +234,7 @@ function TambahAset() {
               />
             </div>
             <div>
-              <label
-                htmlFor="deskripsiPemeliharaan"
-                className="block font-medium"
-              >
+              <label htmlFor="deskripsiPemeliharaan" className="block font-medium">
                 Deskripsi Pemeliharaan
               </label>
               <input
@@ -251,14 +247,37 @@ function TambahAset() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
+            <div>
+              <label htmlFor="tanggalPemeliharaan" className="block font-medium">
+                Tanggal Pemeliharaan Dilakukan
+              </label>
+              <DatePicker
+                selected={formData.tanggalPemeliharaan}
+                onChange={(date) => handleDateChange(date, "tanggalPemeliharaan")}
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                dateFormat="MMMM d, yyyy"
+                wrapperClassName="date-picker"
+              />
+            </div>
+            <div>
+              <label htmlFor="perkiraanWaktuPemeliharaan" className="block font-medium">
+                Perkiraan Waktu Pemeliharaan
+              </label>
+              <input
+                type="text"
+                id="perkiraanWaktuPemeliharaan"
+                name="perkiraanWaktuPemeliharaan"
+                value={formData.perkiraanWaktuPemeliharaan}
+                onChange={handleInputChange}
+                placeholder="Masukkan perkiraan waktu pemeliharaan"
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+              />
+            </div>
           </div>
         </CardInput>
 
         <div className="flex justify-end mt-4">
-        <Button
-            label="Simpan"
-            onClick={() => {}}
-          />
+          <Button label="Simpan" onClick={() => {}} />
         </div>
       </form>
     </TitleCard>

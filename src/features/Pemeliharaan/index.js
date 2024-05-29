@@ -35,6 +35,8 @@ function PemeliharaanAset() {
     infoVendor: "",
     namaPenanggungJawab: "",
     deskripsiPemeliharaan: "",
+    tanggalPemeliharaan: new Date(),
+    perkiraanWaktuPemeliharaan: "",
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,6 +74,7 @@ function PemeliharaanAset() {
         responsiblePerson: "John Doe",
         condition: "Good",
         status: "Completed",
+        estimatedTime: "2 hours",
       },
       {
         id: 2,
@@ -81,6 +84,7 @@ function PemeliharaanAset() {
         responsiblePerson: "Jane Doe",
         condition: "Needs Repair",
         status: "Pending",
+        estimatedTime: "3 hours",
       },
     ]);
     setTotalPages(1);
@@ -109,6 +113,8 @@ function PemeliharaanAset() {
       infoVendor: "", // Sesuaikan dengan data yang ada
       namaPenanggungJawab: asset.responsiblePerson,
       deskripsiPemeliharaan: "", // Sesuaikan dengan data yang ada
+      tanggalPemeliharaan: new Date(asset.maintenanceDate),
+      perkiraanWaktuPemeliharaan: asset.estimatedTime,
     });
     setIsEditModalOpen(true);
   };
@@ -141,8 +147,8 @@ function PemeliharaanAset() {
     setEditFormData({ ...editFormData, [name]: value });
   };
 
-  const handleDateChange = (date) => {
-    setEditFormData({ ...editFormData, tanggalPemeliharaanAset: date });
+  const handleDateChange = (date, name) => {
+    setEditFormData({ ...editFormData, [name]: date });
   };
 
   const handleSubmit = (e) => {
@@ -189,6 +195,7 @@ function PemeliharaanAset() {
                 <th>Penanggung Jawab</th>
                 <th>Kondisi Aset</th>
                 <th>Status</th>
+                <th>Perkiraan Waktu Pemeliharaan</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -201,6 +208,7 @@ function PemeliharaanAset() {
                   <td>{asset.responsiblePerson}</td>
                   <td>{asset.condition}</td>
                   <td>{asset.status}</td>
+                  <td>{asset.estimatedTime}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
@@ -360,7 +368,7 @@ function PemeliharaanAset() {
                   </label>
                   <DatePicker
                     selected={editFormData.tanggalPemeliharaanAset}
-                    onChange={handleDateChange}
+                    onChange={(date) => handleDateChange(date, "tanggalPemeliharaanAset")}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     wrapperClassName="date-picker"
                     dateFormat="MMMM d, yyyy"
@@ -457,14 +465,43 @@ function PemeliharaanAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
+                <div>
+                  <label
+                    htmlFor="tanggalPemeliharaan"
+                    className="block font-medium"
+                  >
+                    Tanggal Pemeliharaan Dilakukan
+                  </label>
+                  <DatePicker
+                    selected={editFormData.tanggalPemeliharaan}
+                    onChange={(date) => handleDateChange(date, "tanggalPemeliharaan")}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
+                    wrapperClassName="date-picker"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="perkiraanWaktuPemeliharaan"
+                    className="block font-medium"
+                  >
+                    Perkiraan Waktu Pemeliharaan
+                  </label>
+                  <input
+                    type="text"
+                    id="perkiraanWaktuPemeliharaan"
+                    name="perkiraanWaktuPemeliharaan"
+                    value={editFormData.perkiraanWaktuPemeliharaan}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan perkiraan waktu pemeliharaan"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
               </div>
             </CardInput>
 
             <div className="flex justify-end mt-4">
-            <Button
-            label="Simpan"
-            onClick={() => {}}
-          />
+              <Button label="Simpan" onClick={() => {}} />
             </div>
           </form>
         </div>
