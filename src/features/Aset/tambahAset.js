@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
-import axios from "axios";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
+import BASE_URL_API from "../../config";
+import { postData, fetchData } from "../../utils/utils";
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
@@ -19,11 +20,26 @@ function TambahAset() {
     infoVendor: "",
     jumlahAsetMasuk: "",
     tanggalAsetMasuk: new Date(),
-    tanggalGaransiMulai: new Date(), // Tambahkan state untuk tanggal mulai garansi
-    tanggalGaransiBerakhir: new Date() // Tambahkan state untuk tanggal berakhir garansi
+    tanggalGaransiMulai: new Date(),
+    tanggalGaransiBerakhir: new Date(),
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [vendors, setVendors] = useState([]);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const response = await fetchData(`${BASE_URL_API}api/v1/manage-aset/vendor`);
+        setVendors(response.data);
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+        enqueueSnackbar("Gagal memuat data vendor!", { variant: "error" });
+      }
+    };
+
+    fetchVendors();
+  }, [enqueueSnackbar]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -40,8 +56,23 @@ function TambahAset() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const selectedVendor = vendors.find(vendor => vendor.nama_vendor === formData.namaVendor);
+
+    const dataToSend = {
+      vendor_id: selectedVendor ? selectedVendor._id : "",
+      nama: formData.namaAset,
+      kategori: formData.kategoriAset,
+      merek: formData.merekAset,
+      kode: formData.noSeri,
+      produksi: formData.tahunProduksi,
+      deskripsi: formData.deskripsiAset,
+      jumlah: formData.jumlahAsetMasuk,
+      aset_masuk: formData.tanggalAsetMasuk.toISOString().split('T')[0]
+    };
+
     try {
-      const response = await axios.post("URL_API_POST", formData);
+      await postData(`${BASE_URL_API}api/v1/manage-aset/aset`, dataToSend);
       enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
     } catch (error) {
       console.error("Error posting data:", error);
@@ -52,6 +83,7 @@ function TambahAset() {
   const handleDateChange = (date, fieldName) => {
     setFormData((prev) => ({ ...prev, [fieldName]: date }));
   };
+
   return (
     <TitleCard title="Tambah Aset" topMargin="mt-2">
       <form onSubmit={handleSubmit}>
@@ -83,7 +115,7 @@ function TambahAset() {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
-                <option>Pilih jenis kategori aset</option>
+                <option value="">Pilih jenis kategori aset</option>
                 <option value="asetLama">Aset Lama</option>
                 <option value="asetBaru">Aset Baru</option>
               </select>
@@ -252,8 +284,11 @@ function TambahAset() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih vendor</option>
-                <option value="olahragaMantap">Olahraga Mantap</option>
-                <option value="basketRing">Basket Ring</option>
+                {vendors.map((vendor) => (
+                  <option key={vendor._id} value={vendor.nama_vendor}>
+                    {vendor.nama_vendor}
+                  </option>
+                ))}
               </select>
 
               <label
@@ -291,7 +326,9 @@ function TambahAset() {
               </label>
               <DatePicker
                 selected={formData.tanggalAsetMasuk}
-                onChange={handleDateChange}
+                onChange={(date) =>
+                  handleDateChange(date, "tanggalAsetMasuk")
+                }
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 dateFormat="MMMM d, yyyy"
                 wrapperClassName="date-picker"
@@ -301,7 +338,7 @@ function TambahAset() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <Button label="Simpan Aset" onClick={() => {}} />
+          <Button label="Simpan Aset" onClick={handleSubmit} />
         </div>
       </form>
     </TitleCard>

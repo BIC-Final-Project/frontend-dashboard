@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-// import LandingIntro from "./LandingIntro";
 import ErrorText from "../../components/Typography/ErrorText";
 import InputText from "../../components/Input/InputText";
 import LoginImage from "../../assets/Login.png";
 import LogoWhite from "../../assets/LogoWhite.svg";
+import BASE_URL_API from "../../config";
+import axios from 'axios';
 
 function Login() {
   const INITIAL_LOGIN_OBJ = {
@@ -16,25 +17,38 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [loginObj, setLoginObj] = useState(INITIAL_LOGIN_OBJ);
 
-  const submitForm = (e) => {
+  const submitForm = async (e) => {
     e.preventDefault();
     setErrorMessage("");
 
     if (loginObj.emailId.trim() === "")
-      return setErrorMessage("Email Id is required! (use any value)");
+      return setErrorMessage("Email Id is required!");
     if (loginObj.password.trim() === "")
-      return setErrorMessage("Password is required! (use any value)");
-    else if (
-      loginObj.emailId.trim() === "admin@gmail.com" &&
-      loginObj.password.trim() === "12345678"
-    ) {
-      setLoading(true);
-      // Call API to check user credentials and save token in localstorage
-      localStorage.setItem("token", "DumyTokenHere");
+      return setErrorMessage("Password is required!");
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL_API}api/v1/auth/login`, {
+        email: loginObj.emailId,
+        password: loginObj.password,
+      });
+
+      console.log(response);
+
+      const { token, refresh_token, data } = response.data;
+
+      // Simpan token dan data pengguna di localStorage
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("refresh_token", refresh_token);
+      localStorage.setItem("user", JSON.stringify(data));
+
       setLoading(false);
-      window.location.href = "/app/welcome";
-    } else {
-      return setErrorMessage("Email or Password is wrong!");
+      window.location.href = "/app/asset/detail-aset";
+    } catch (error) {
+      setLoading(false);
+      setErrorMessage("Email or Password is wrong!");
+      console.error(error);
     }
   };
 
@@ -45,9 +59,9 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center">
-      <div className="card mx-auto w-full max-w-5xl ">
-        <div className="grid  md:grid-cols-2 grid-cols-1 shadow-xl  bg-base-100 rounded-[80px]">
-          <div className=" relative">
+      <div className="card mx-auto w-full max-w-5xl">
+        <div className="grid md:grid-cols-2 grid-cols-1 shadow-xl bg-base-100 rounded-[80px]">
+          <div className="relative">
             <img
               src={LoginImage}
               alt="Login"
@@ -62,7 +76,7 @@ function Login() {
             <p className="text-sm">
               Masuk dengan data Anda yang sudah di daftarkan.
             </p>
-            <form onSubmit={(e) => submitForm(e)}>
+            <form onSubmit={submitForm}>
               <div className="mb-4">
                 <InputText
                   type="emailId"
@@ -85,7 +99,7 @@ function Login() {
 
               <div className="text-right text-primary">
                 <Link to="/forgot-password">
-                  <span className="text-sm  inline-block  hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
+                  <span className="text-sm inline-block hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
                     Forgot Password?
                   </span>
                 </Link>
@@ -95,7 +109,8 @@ function Login() {
               <button
                 type="submit"
                 className={
-                  "btn mt-2 w-full bg-[#3A5913] hover:bg-[#617A42]" + (loading ? " loading" : "")
+                  "btn mt-2 w-full text-white bg-[#3A5913] hover:bg-[#617A42]" +
+                  (loading ? " loading" : "")
                 }
               >
                 Login
@@ -104,7 +119,7 @@ function Login() {
               <div className="text-center mt-4">
                 Don't have an account yet?{" "}
                 <Link to="/register">
-                  <span className="  inline-block  hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
+                  <span className="inline-block hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
                     Register
                   </span>
                 </Link>

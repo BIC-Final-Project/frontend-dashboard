@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
-import CardInput from "../../components/Cards/CardInput"; // Pastikan Anda mengimpor komponen CardInput
+import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
+import BASE_URL_API from "../../config";
+import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+
+const API_URL = `${BASE_URL_API}api/v1/manage-aset/aset`;
+const ITEMS_PER_PAGE = 10;
 
 function DetailAset() {
   const [assets, setAssets] = useState([]);
+  const [filteredAssets, setFilteredAssets] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [modal, setModal] = useState({
@@ -23,6 +28,7 @@ function DetailAset() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
+    _id: "",
     namaAset: "",
     kategoriAset: "",
     merekAset: "",
@@ -33,60 +39,34 @@ function DetailAset() {
     jumlahAsetMasuk: "",
     infoVendor: "",
     tanggalAsetMasuk: new Date(),
+    tanggalGaransiMulai: new Date(),
+    tanggalGaransiBerakhir: new Date(),
   });
   const [imagePreview, setImagePreview] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    fetchAssets();
+  }, []);
 
   useEffect(() => {
-    fetchAssets(currentPage);
-  }, [currentPage]);
+    handleSearch();
+  }, [searchQuery, assets]);
 
-  const fetchAssets = async (page) => {
+  const fetchAssets = async () => {
     try {
-      const pageSize = 10;
-      const response = await axios.get(
-        `URL_API?page=${page}&pageSize=${pageSize}`
-      );
-      const result = response.data;
-      if (result.code === 0) {
+      const result = await fetchData(API_URL);
+      if (result.status === 200) {
         setAssets(result.data);
-        const totalData = result.totalCount;
-        setTotalPages(Math.ceil(totalData / pageSize));
+        setFilteredAssets(result.data);
+        setTotalPages(Math.ceil(result.data.length / ITEMS_PER_PAGE));
       } else {
-        console.error("API error:", result.info);
-        loadDummyData();
+        console.error("API error:", result.message);
       }
     } catch (error) {
-      console.error("Axios error:", error.message);
-      loadDummyData();
+      console.error("Fetch assets error:", error.message);
     }
-  };
-
-  const loadDummyData = () => {
-    const fetchedAssets = [
-      {
-        id: 1,
-        name: "Laptop",
-        dateEntered: "2023-05-01",
-        vendorName: "Dell",
-        category: "Elektronik",
-        quantity: 10,
-        image: "https://via.placeholder.com/150",
-      },
-      {
-        id: 2,
-        name: "Printer",
-        dateEntered: "2023-05-02",
-        vendorName: "HP",
-        category: "Perkantoran",
-        quantity: 5,
-        image: "https://via.placeholder.com/150",
-      },
-    ];
-    setAssets(fetchedAssets);
-    setTotalPages(1);
   };
 
   const handleDeleteAsset = (id) => {
@@ -99,33 +79,30 @@ function DetailAset() {
   };
 
   const handleEditAsset = (asset) => {
-    console.log("Editing asset: ", asset);
-    
     const parseDate = (dateString) => {
       return dateString ? new Date(dateString) : new Date();
     };
-  
+
     setEditFormData({
       ...editFormData,
-      namaAset: asset.name,
-      kategoriAset: asset.category,
-      merekAset: asset.vendorName,
-      noSeri: asset.serialNumber || "",
-      tahunProduksi: asset.productionYear || "",
-      deskripsiAset: asset.description || "",
-      namaVendor: asset.vendorName,
-      jumlahAsetMasuk: asset.quantity || "",
-      infoVendor: asset.vendorInfo || "",
-      tanggalAsetMasuk: parseDate(asset.dateEntered),
-      tanggalGaransiMulai: parseDate(asset.warrantyStart),
-      tanggalGaransiBerakhir: parseDate(asset.warrantyEnd),
+      _id: asset._id,
+      namaAset: asset.nama_aset,
+      kategoriAset: asset.kategori_aset,
+      merekAset: asset.merek_aset,
+      noSeri: asset.kode_produksi || "",
+      tahunProduksi: asset.tahun_produksi || "",
+      deskripsiAset: asset.deskripsi_aset || "",
+      namaVendor: asset.vendor_id,
+      jumlahAsetMasuk: asset.jumlah_aset || "",
+      infoVendor: "",
+      tanggalAsetMasuk: parseDate(asset.aset_masuk),
+      tanggalGaransiMulai: parseDate(asset.tanggal_garansi_mulai),
+      tanggalGaransiBerakhir: parseDate(asset.tanggal_garansi_berakhir),
     });
-  
-    setImagePreview(asset.image);
+
+    setImagePreview(asset.gambar_aset.url || "https://via.placeholder.com/150");
     setIsEditModalOpen(true);
   };
-  
-  
 
   const closeDialog = () => {
     setModal({ isOpen: false, id: null });
@@ -137,9 +114,9 @@ function DetailAset() {
 
   const confirmDelete = async () => {
     try {
-      const response = await axios.post("URL_DELETE_ASSET", { id: modal.id });
-      if (response.status === 200) {
-        setAssets(assets.filter((asset) => asset.id !== modal.id));
+      const result = await deleteData(`${API_URL}/${modal.id}`);
+      if (result.status === 200) {
+        setAssets(assets.filter((asset) => asset._id !== modal.id));
         enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
@@ -162,13 +139,40 @@ function DetailAset() {
     setEditFormData({ ...editFormData, [name]: value });
   };
 
-  const handleDateChange = (date) => {
-    setEditFormData({ ...editFormData, tanggalAsetMasuk: date });
+  const handleDateChange = (date, name) => {
+    setEditFormData({ ...editFormData, [name]: date });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Tambahkan logika untuk menyimpan data aset yang diubah
+    try {
+      const dataToUpdate = {
+        vendor_id: editFormData.namaVendor,
+        nama: editFormData.namaAset,
+        kategori: editFormData.kategoriAset,
+        merek: editFormData.merekAset,
+        kode: editFormData.noSeri,
+        produksi: editFormData.tahunProduksi,
+        deskripsi: editFormData.deskripsiAset,
+        gambar: {}, // Handle gambar file upload separately if needed
+        jumlah: editFormData.jumlahAsetMasuk,
+        aset_masuk: moment(editFormData.tanggalAsetMasuk).format("YYYY-MM-DD"),
+      };
+
+      const result = await updateData(`${API_URL}/${editFormData._id}`, dataToUpdate);
+      if (result.status === 200) {
+        const updatedAssets = assets.map((asset) =>
+          asset._id === editFormData._id ? result.data : asset
+        );
+        setAssets(updatedAssets);
+        setFilteredAssets(updatedAssets);
+        enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
+      } else {
+        enqueueSnackbar("Gagal memperbarui aset.", { variant: "error" });
+      }
+    } catch (error) {
+      enqueueSnackbar("Gagal memperbarui aset.", { variant: "error" });
+    }
     closeEditModal();
   };
 
@@ -183,27 +187,42 @@ function DetailAset() {
       setCurrentPage(currentPage - 1);
     }
   };
-  
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-  
+
+  const handleSearch = () => {
+    const lowercasedQuery = searchQuery.toLowerCase();
+    const filtered = assets.filter(
+      (asset) =>
+        asset.nama_aset.toLowerCase().includes(lowercasedQuery) ||
+        asset.kategori_aset.toLowerCase().includes(lowercasedQuery) ||
+        asset.vendor_id.toLowerCase().includes(lowercasedQuery)
+    );
+    setFilteredAssets(filtered);
+    setTotalPages(Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    setCurrentPage(1);
+  };
+
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <>
       <TitleCard title="Detail Aset" topMargin="mt-2">
-      <div className="mb-4 flex justify-between items-center relative">
-      <input
+        <div className="mb-4 flex justify-between items-center relative">
+          <input
             type="text"
             placeholder="Cari Riwayat Pemeliharaan Aset"
             className="input input-bordered w-full max-w-xs"
             value={searchQuery}
             onChange={handleSearchChange}
           />
-      </div>
-      
+        </div>
         <div className="overflow-x-auto w-full">
-        
           <table className="table w-full">
             <thead>
               <tr>
@@ -219,26 +238,38 @@ function DetailAset() {
               </tr>
             </thead>
             <tbody>
-              {assets.map((asset) => (
-                <tr key={asset.id}>
+              {paginatedAssets.map((asset) => (
+                <tr key={asset._id}>
                   <td>
                     <div className="avatar">
                       <div className="mask mask-squircle w-12 h-12">
-                        <img src={asset.image} alt="Foto Aset" />
+                        <img
+                          src={
+                            asset.gambar_aset.url ||
+                            "https://via.placeholder.com/150"
+                          }
+                          alt="Foto Aset"
+                        />
                       </div>
                     </div>
                   </td>
-                  <td>{asset.name}</td>
-                  <td>{moment(asset.dateEntered).format("DD MMM YYYY")}</td>
-                  <td>{moment(asset.warrantyStart).format("DD MMM YYYY")}</td>
-                  <td>{moment(asset.warrantyEnd).format("DD MMM YYYY")}</td>
-                  <td>{asset.vendorName}</td>
-                  <td>{asset.category}</td>
-                  <td>{asset.quantity}</td>
+                  <td>{asset.nama_aset}</td>
+                  <td>{moment(asset.aset_masuk).format("DD MMM YYYY")}</td>
+                  <td>
+                    {moment(asset.tanggal_garansi_mulai).format("DD MMM YYYY")}
+                  </td>
+                  <td>
+                    {moment(asset.tanggal_garansi_berakhir).format(
+                      "DD MMM YYYY"
+                    )}
+                  </td>
+                  <td>{asset.vendor_id}</td>
+                  <td>{asset.kategori_aset}</td>
+                  <td>{asset.jumlah_aset}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => handleDeleteAsset(asset.id)}
+                      onClick={() => handleDeleteAsset(asset._id)}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
@@ -281,15 +312,20 @@ function DetailAset() {
         onClose={closeDialog}
         onConfirm={confirmDelete}
       />
-
       <div
         className={`modal ${isEditModalOpen ? "modal-open" : ""}`}
-        onClick={closeEditModal}
+        onClick={(e) => e.stopPropagation()}
       >
         <div
           className="modal-box relative max-w-4xl"
           onClick={(e) => e.stopPropagation()}
         >
+          <button
+            className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+            onClick={closeEditModal}
+          >
+            &times;
+          </button>
           <form onSubmit={handleSubmit}>
             <CardInput title="Identitas Aset">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -486,8 +522,8 @@ function DetailAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
                     <option value="">Pilih vendor</option>
-                    <option value="olahragaMantap">Olahraga Mantap</option>
-                    <option value="basketRing">Basket Ring</option>
+                    <option value="666d29ced09dff28c5b42e2a">Vendor A</option>
+                    <option value="666d29ced09dff28c5b42e2b">Vendor B</option>
                   </select>
 
                   <label
@@ -528,7 +564,9 @@ function DetailAset() {
                   </label>
                   <DatePicker
                     selected={editFormData.tanggalAsetMasuk}
-                    onChange={handleDateChange}
+                    onChange={(date) =>
+                      handleDateChange(date, "tanggalAsetMasuk")
+                    }
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     dateFormat="MMMM d, yyyy"
                     wrapperClassName="date-picker"
@@ -538,7 +576,7 @@ function DetailAset() {
             </CardInput>
 
             <div className="flex justify-end mt-4">
-              <Button label="Simpan" onClick={() => {}} />
+              <Button label="Simpan" onClick={handleSubmit} />
             </div>
           </form>
         </div>
