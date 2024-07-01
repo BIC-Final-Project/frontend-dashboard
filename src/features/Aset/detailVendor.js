@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
-import CardInput from "../../components/Cards/CardInput"; // Pastikan Anda mengimpor komponen CardInput
+import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import Button from "../../components/Button";
-import DialogComponent from "../../components/Dialog/InformationDialog"; // Sesuaikan path dengan lokasi file DialogComponent
+import DialogComponent from "../../components/Dialog/InformationDialog";
+import BASE_URL_API from "../../config";
+import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
 
 function DetailVendor() {
   const [vendors, setVendors] = useState([]);
@@ -20,60 +21,45 @@ function DetailVendor() {
     id: null,
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // State untuk mengontrol tampilan DialogComponent
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    namaVendor: "",
-    noTlpVendor: "",
-    alamat: "",
-    jenisVendor: "",
+    nama_vendor: "",
+    telp_vendor: "",
+    alamat_vendor: "",
+    jenis_vendor: "",
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetchVendors(currentPage);
-  }, [currentPage]);
+    fetchVendors();
+  }, []);
 
-  const fetchVendors = async (page) => {
+  const fetchVendors = async () => {
     try {
-      const pageSize = 10;
-      const response = await axios.get(
-        `URL_API?page=${page}&pageSize=${pageSize}`
+      const response = await fetchData(
+        `${BASE_URL_API}api/v1/manage-aset/vendor`
       );
-      const result = response.data;
-      if (result.code === 0) {
-        setVendors(result.data);
-        const totalData = result.totalCount;
-        setTotalPages(Math.ceil(totalData / pageSize));
+      if (response && response.data) {
+        // Add index to each vendor
+        const vendorsWithIndex = response.data.map((vendor, index) => ({
+          ...vendor,
+          index: index,
+        }));
+
+        // Sort vendors based on index in descending order
+        const sortedVendors = vendorsWithIndex.sort(
+          (a, b) => b.index - a.index
+        );
+
+        setVendors(sortedVendors);
+        setTotalPages(Math.ceil(sortedVendors.length / 10));
       } else {
-        console.error("API error:", result.info);
-        loadDummyData();
+        console.error("API error:", response.info);
       }
     } catch (error) {
       console.error("Axios error:", error.message);
-      loadDummyData();
     }
-  };
-
-  const loadDummyData = () => {
-    const fetchedVendors = [
-      {
-        id: 1,
-        namaVendor: "PT. Sukses Makmur",
-        noTlpVendor: "08123456789",
-        alamat: "Jl. Raya No. 123, Jakarta",
-        jenisVendor: "Elektronik",
-      },
-      {
-        id: 2,
-        namaVendor: "CV. Sejahtera",
-        noTlpVendor: "08198765432",
-        alamat: "Jl. Merdeka No. 456, Bandung",
-        jenisVendor: "Peralatan Kantor",
-      },
-    ];
-    setVendors(fetchedVendors);
-    setTotalPages(1);
   };
 
   const handleDeleteVendor = (id) => {
@@ -87,10 +73,11 @@ function DetailVendor() {
 
   const handleEditVendor = (vendor) => {
     setEditFormData({
-      namaVendor: vendor.namaVendor,
-      noTlpVendor: vendor.noTlpVendor,
-      alamat: vendor.alamat,
-      jenisVendor: vendor.jenisVendor,
+      _id: vendor._id,
+      nama_vendor: vendor.nama_vendor,
+      telp_vendor: vendor.telp_vendor,
+      alamat_vendor: vendor.alamat_vendor,
+      jenis_vendor: vendor.jenis_vendor,
     });
     setIsEditModalOpen(true);
   };
@@ -104,14 +91,16 @@ function DetailVendor() {
   };
 
   const closeDialogComponent = () => {
-    setIsDialogOpen(false); // Fungsi untuk menutup DialogComponent
+    setIsDialogOpen(false);
   };
 
   const confirmDelete = async () => {
     try {
-      const response = await axios.post("URL_DELETE_VENDOR", { id: modal.id });
+      const response = await deleteData(
+        `${BASE_URL_API}api/v1/manage-aset/vendor/${modal.id}`
+      );
       if (response.status === 200) {
-        setVendors(vendors.filter((vendor) => vendor.id !== modal.id));
+        setVendors(vendors.filter((vendor) => vendor._id !== modal.id));
         enqueueSnackbar("Vendor berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus vendor.", { variant: "error" });
@@ -129,14 +118,16 @@ function DetailVendor() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsDialogOpen(true); 
+    setIsDialogOpen(true);
     try {
-      // Tambahkan logika untuk menyimpan data vendor yang diubah
-      // Contoh panggilan API
-      const response = await axios.post("URL_SAVE_VENDOR", editFormData);
+      const response = await updateData(
+        `${BASE_URL_API}api/v1/manage-aset/vendor/${editFormData._id}`,
+        editFormData
+      );
       if (response.status === 200) {
         enqueueSnackbar("Vendor berhasil disimpan.", { variant: "success" });
-        setIsDialogOpen(true); // Tampilkan dialog konfirmasi
+        setIsDialogOpen(true);
+        fetchVendors();
       } else {
         enqueueSnackbar("Gagal menyimpan vendor.", { variant: "error" });
       }
@@ -162,18 +153,23 @@ function DetailVendor() {
     setSearchQuery(e.target.value);
   };
 
+  const paginatedVendors = vendors.slice(
+    (currentPage - 1) * 10,
+    currentPage * 10
+  );
+
   return (
     <>
       <TitleCard title="Detail Vendor" topMargin="mt-2">
-      <div className="mb-4 flex justify-between items-center relative">
-      <input
+        <div className="mb-4 flex justify-between items-center relative">
+          <input
             type="text"
-            placeholder="Cari Riwayat Pemeliharaan Aset"
+            placeholder="Cari Vendor"
             className="input input-bordered w-full max-w-xs"
             value={searchQuery}
             onChange={handleSearchChange}
           />
-      </div>
+        </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
             <thead>
@@ -186,16 +182,16 @@ function DetailVendor() {
               </tr>
             </thead>
             <tbody>
-              {vendors.map((vendor) => (
-                <tr key={vendor.id}>
-                  <td>{vendor.namaVendor}</td>
-                  <td>{vendor.noTlpVendor}</td>
-                  <td>{vendor.alamat}</td>
-                  <td>{vendor.jenisVendor}</td>
+              {paginatedVendors.map((vendor) => (
+                <tr key={vendor._id}>
+                  <td>{vendor.nama_vendor}</td>
+                  <td>{vendor.telp_vendor}</td>
+                  <td>{vendor.alamat_vendor}</td>
+                  <td>{vendor.jenis_vendor}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => handleDeleteVendor(vendor.id)}
+                      onClick={() => handleDeleteVendor(vendor._id)}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
@@ -251,28 +247,28 @@ function DetailVendor() {
             <CardInput title="Identitas Vendor">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="namaVendor" className="block font-medium">
+                  <label htmlFor="nama_vendor" className="block font-medium">
                     Nama Vendor *
                   </label>
                   <input
                     type="text"
-                    id="namaVendor"
-                    name="namaVendor"
-                    value={editFormData.namaVendor}
+                    id="nama_vendor"
+                    name="nama_vendor"
+                    value={editFormData.nama_vendor}
                     onChange={handleInputChange}
                     placeholder="Masukkan Nama Vendor"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
                 <div>
-                  <label htmlFor="noTlpVendor" className="block font-medium">
+                  <label htmlFor="telp_vendor" className="block font-medium">
                     No Tlp Vendor *
                   </label>
                   <input
                     type="text"
-                    id="noTlpVendor"
-                    name="noTlpVendor"
-                    value={editFormData.noTlpVendor}
+                    id="telp_vendor"
+                    name="telp_vendor"
+                    value={editFormData.telp_vendor}
                     onChange={handleInputChange}
                     placeholder="Masukkan No Tlp Vendor"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -283,28 +279,28 @@ function DetailVendor() {
             <CardInput title="Detail Vendor">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="alamat" className="block font-medium">
+                  <label htmlFor="alamat_vendor" className="block font-medium">
                     Alamat *
                   </label>
                   <input
                     type="text"
-                    id="alamat"
-                    name="alamat"
-                    value={editFormData.alamat}
+                    id="alamat_vendor"
+                    name="alamat_vendor"
+                    value={editFormData.alamat_vendor}
                     onChange={handleInputChange}
                     placeholder="Masukkan Alamat"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
                 <div>
-                  <label htmlFor="jenisVendor" className="block font-medium">
+                  <label htmlFor="jenis_vendor" className="block font-medium">
                     Jenis Vendor *
                   </label>
                   <input
                     type="text"
-                    id="jenisVendor"
-                    name="jenisVendor"
-                    value={editFormData.jenisVendor}
+                    id="jenis_vendor"
+                    name="jenis_vendor"
+                    value={editFormData.jenis_vendor}
                     onChange={handleInputChange}
                     placeholder="Masukkan Jenis Vendor"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"

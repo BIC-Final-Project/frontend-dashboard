@@ -18,15 +18,21 @@ export const fetchData = async (url) => {
   }
 };
 
-export const postData = async (url, data) => {
+export const postData = async (url, data, useFormData = false) => {
   try {
+    const headers = {
+      'Authorization': `Bearer ${getAuthToken()}`,
+    };
+
+    if (!useFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await axios.post(url, data, {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       maxBodyLength: Infinity,
     });
+
     return response.data;
   } catch (error) {
     console.error('Error posting data:', error);
@@ -34,15 +40,21 @@ export const postData = async (url, data) => {
   }
 };
 
-export const updateData = async (url, data) => {
+export const updateData = async (url, data, useFormData = false) => {
   try {
+    const headers = {
+      'Authorization': `Bearer ${getAuthToken()}`,
+    };
+
+    if (!useFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await axios.put(url, data, {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       maxBodyLength: Infinity,
     });
+
     return response.data;
   } catch (error) {
     console.error('Error updating data:', error);

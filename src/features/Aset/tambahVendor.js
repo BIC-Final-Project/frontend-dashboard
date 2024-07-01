@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useSnackbar } from 'notistack';
-import axios from 'axios';
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
-import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import Button from "../../components/Button";
+import BASE_URL_API from "../../config";
+import { postData } from "../../utils/utils";
 
 function TambahVendor() {
   const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
-    namaAset: "",
-    phone: "",
-    alamatVendor: "",
-    jenisVendor: ""
+    nama_vendor: "",
+    telp_vendor: "",
+    alamat_vendor: "",
+    jenis_vendor: ""
   });
 
   const handleInputChange = (event) => {
@@ -26,8 +26,12 @@ function TambahVendor() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post('URL_API_VENDOR', formData);
-      enqueueSnackbar('Vendor berhasil ditambahkan!', { variant: 'success' });
+      const response = await postData(`${BASE_URL_API}api/v1/manage-aset/vendor`, formData);
+      if (response.status === 200 || response.status === 201) {
+        enqueueSnackbar('Vendor berhasil ditambahkan!', { variant: 'success' });
+      }else{
+        enqueueSnackbar('Gagal menambahkan vendor!', { variant: 'error' });
+      }
     } catch (error) {
       console.error('Error posting data:', error);
       enqueueSnackbar('Gagal menambahkan vendor!', { variant: 'error' });
@@ -40,28 +44,28 @@ function TambahVendor() {
         <CardInput title="Identitas Vendor">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="namaAset" className="block font-medium">
-                Nama Aset *
+              <label htmlFor="nama_vendor" className="block font-medium">
+                Nama Vendor *
               </label>
               <input
                 type="text"
-                id="namaAset"
-                name="namaAset"
-                value={formData.namaAset}
+                id="nama_vendor"
+                name="nama_vendor"
+                value={formData.nama_vendor}
                 onChange={handleInputChange}
-                placeholder="Masukkan Nama Aset"
+                placeholder="Masukkan Nama Vendor"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block font-medium">
+              <label htmlFor="telp_vendor" className="block font-medium">
                 No Telpon *
               </label>
               <input
                 type="text"
-                id="phone"
-                name="phone"
-                value={formData.phone}
+                id="telp_vendor"
+                name="telp_vendor"
+                value={formData.telp_vendor}
                 onChange={handleInputChange}
                 placeholder="Masukkan No Telpon"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -70,31 +74,31 @@ function TambahVendor() {
           </div>
         </CardInput>
 
-        <CardInput title="Detail Aset">
+        <CardInput title="Detail Vendor">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="alamatVendor" className="block font-medium">
+              <label htmlFor="alamat_vendor" className="block font-medium">
                 Alamat Vendor
               </label>
               <input
                 type="text"
-                id="alamatVendor"
-                name="alamatVendor"
-                value={formData.alamatVendor}
+                id="alamat_vendor"
+                name="alamat_vendor"
+                value={formData.alamat_vendor}
                 onChange={handleInputChange}
                 placeholder="Masukkan Alamat Vendor"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
             <div>
-              <label htmlFor="jenisVendor" className="block font-medium">
+              <label htmlFor="jenis_vendor" className="block font-medium">
                 Jenis Vendor
               </label>
               <input
                 type="text"
-                id="jenisVendor"
-                name="jenisVendor"
-                value={formData.jenisVendor}
+                id="jenis_vendor"
+                name="jenis_vendor"
+                value={formData.jenis_vendor}
                 onChange={handleInputChange}
                 placeholder="Masukkan Jenis Vendor"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -104,9 +108,9 @@ function TambahVendor() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-        <Button
-            label="Simpan Aset"
-            onClick={() => {}}
+          <Button
+            label="Simpan Vendor"
+            type="submit"
           />
         </div>
       </form>

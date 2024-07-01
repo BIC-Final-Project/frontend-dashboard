@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
@@ -13,11 +13,13 @@ import BASE_URL_API from "../../config";
 import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
 
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/aset`;
+const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
 const ITEMS_PER_PAGE = 10;
 
 function DetailAset() {
   const [assets, setAssets] = useState([]);
   const [filteredAssets, setFilteredAssets] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [modal, setModal] = useState({
@@ -42,30 +44,88 @@ function DetailAset() {
     tanggalGaransiMulai: new Date(),
     tanggalGaransiBerakhir: new Date(),
   });
+  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
+  const [vendor, setVendor] = useState(null);
+
+  const modalRef = useRef(null);
 
   useEffect(() => {
     fetchAssets();
+    fetchVendors();
   }, []);
 
   useEffect(() => {
     handleSearch();
   }, [searchQuery, assets]);
 
+  useEffect(() => {
+    if (isEditModalOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isEditModalOpen]);
+
+  const handleClickOutside = (event) => {
+    if (modalRef.current && !modalRef.current.contains(event.target)) {
+      closeEditModal();
+    }
+  };
+
   const fetchAssets = async () => {
     try {
       const result = await fetchData(API_URL);
       if (result.status === 200) {
-        setAssets(result.data);
-        setFilteredAssets(result.data);
-        setTotalPages(Math.ceil(result.data.length / ITEMS_PER_PAGE));
+        const assetsWithIndex = result.data.map((asset, index) => ({
+          ...asset,
+          index: index, // Add index to each asset
+        }));
+
+        const sortedAssets = assetsWithIndex.sort((a, b) => b.index - a.index);
+
+        setAssets(sortedAssets);
+        setFilteredAssets(sortedAssets);
+        setTotalPages(Math.ceil(sortedAssets.length / ITEMS_PER_PAGE));
       } else {
         console.error("API error:", result.message);
       }
     } catch (error) {
       console.error("Fetch assets error:", error.message);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const result = await fetchData(VENDOR_API_URL);
+      if (result.status === 200) {
+        setVendors(result.data);
+      } else {
+        console.error("API error:", result.message);
+      }
+    } catch (error) {
+      console.error("Fetch vendors error:", error.message);
+    }
+  };
+
+  const getVendor = async (id) => {
+    try {
+      const result = await fetchData(`${VENDOR_API_URL}/${id}`);
+      if (result.status === 200) {
+        setVendor(result.data);
+        return result.data;
+      } else {
+        enqueueSnackbar("Vendor tidak ditemukan", { variant: "error" });
+        return null;
+      }
+    } catch (error) {
+      enqueueSnackbar("Vendor tidak ditemukan", { variant: "error" });
+      return null;
     }
   };
 
@@ -78,10 +138,12 @@ function DetailAset() {
     });
   };
 
-  const handleEditAsset = (asset) => {
+  const handleEditAsset = async (asset) => {
     const parseDate = (dateString) => {
       return dateString ? new Date(dateString) : new Date();
     };
+
+    const vendorData = await getVendor(asset.vendor_id);
 
     setEditFormData({
       ...editFormData,
@@ -92,16 +154,33 @@ function DetailAset() {
       noSeri: asset.kode_produksi || "",
       tahunProduksi: asset.tahun_produksi || "",
       deskripsiAset: asset.deskripsi_aset || "",
-      namaVendor: asset.vendor_id,
+      namaVendor: vendorData ? `${vendorData.nama_vendor}` : "",
       jumlahAsetMasuk: asset.jumlah_aset || "",
-      infoVendor: "",
+      infoVendor: vendorData ? `${vendorData.telp_vendor}` : "",
       tanggalAsetMasuk: parseDate(asset.aset_masuk),
-      tanggalGaransiMulai: parseDate(asset.tanggal_garansi_mulai),
-      tanggalGaransiBerakhir: parseDate(asset.tanggal_garansi_berakhir),
+      tanggalGaransiMulai: parseDate(asset.garansi_dimulai),
+      tanggalGaransiBerakhir: parseDate(asset.garansi_berakhir),
     });
 
-    setImagePreview(asset.gambar_aset.url || "https://via.placeholder.com/150");
+    setImagePreview(
+      asset.gambar_aset.image_url || "https://via.placeholder.com/150"
+    );
     setIsEditModalOpen(true);
+  };
+
+  const handleVendorChange = async (e) => {
+    const selectedVendorId = e.target.value;
+    const selectedVendor = vendors.find(
+      (vendor) => vendor.nama_vendor === selectedVendorId
+    );
+
+    if (selectedVendor) {
+      setEditFormData((prevState) => ({
+        ...prevState,
+        namaVendor: selectedVendor.nama_vendor,
+        infoVendor: selectedVendor.telp_vendor,
+      }));
+    }
   };
 
   const closeDialog = () => {
@@ -130,6 +209,7 @@ function DetailAset() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
   };
@@ -145,21 +225,45 @@ function DetailAset() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const dataToUpdate = {
-        vendor_id: editFormData.namaVendor,
-        nama: editFormData.namaAset,
-        kategori: editFormData.kategoriAset,
-        merek: editFormData.merekAset,
-        kode: editFormData.noSeri,
-        produksi: editFormData.tahunProduksi,
-        deskripsi: editFormData.deskripsiAset,
-        gambar: {}, // Handle gambar file upload separately if needed
-        jumlah: editFormData.jumlahAsetMasuk,
-        aset_masuk: moment(editFormData.tanggalAsetMasuk).format("YYYY-MM-DD"),
-      };
+    const dataToUpdate = new FormData();
+    const selectedVendor = vendors.find(
+      (vendor) => vendor.nama_vendor === editFormData.namaVendor
+    );
 
-      const result = await updateData(`${API_URL}/${editFormData._id}`, dataToUpdate);
+    dataToUpdate.append(
+      "vendor_id",
+      selectedVendor ? selectedVendor._id : editFormData.namaVendor
+    );
+    dataToUpdate.append("nama", editFormData.namaAset);
+    dataToUpdate.append("kategori", editFormData.kategoriAset);
+    dataToUpdate.append("merek", editFormData.merekAset);
+    dataToUpdate.append("kode", editFormData.noSeri);
+    dataToUpdate.append("produksi", editFormData.tahunProduksi);
+    dataToUpdate.append("deskripsi", editFormData.deskripsiAset);
+    dataToUpdate.append("jumlah", editFormData.jumlahAsetMasuk);
+    dataToUpdate.append(
+      "aset_masuk",
+      moment(editFormData.tanggalAsetMasuk).format("YYYY-MM-DD")
+    );
+    dataToUpdate.append(
+      "garansi_mulai",
+      moment(editFormData.tanggalGaransiMulai).format("YYYY-MM-DD")
+    );
+    dataToUpdate.append(
+      "garansi_berakhir",
+      moment(editFormData.tanggalGaransiBerakhir).format("YYYY-MM-DD")
+    );
+
+    if (imageFile) {
+      dataToUpdate.append("gambar", imageFile);
+    }
+
+    try {
+      const result = await updateData(
+        `${API_URL}/${editFormData._id}`,
+        dataToUpdate,
+        true
+      );
       if (result.status === 200) {
         const updatedAssets = assets.map((asset) =>
           asset._id === editFormData._id ? result.data : asset
@@ -205,6 +309,11 @@ function DetailAset() {
     setCurrentPage(1);
   };
 
+  const getVendorName = (vendorId) => {
+    const vendor = vendors.find((vendor) => vendor._id === vendorId);
+    return vendor ? vendor.nama_vendor : "Unknown Vendor";
+  };
+
   const paginatedAssets = filteredAssets.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -245,7 +354,7 @@ function DetailAset() {
                       <div className="mask mask-squircle w-12 h-12">
                         <img
                           src={
-                            asset.gambar_aset.url ||
+                            asset.gambar_aset.image_url ||
                             "https://via.placeholder.com/150"
                           }
                           alt="Foto Aset"
@@ -255,15 +364,11 @@ function DetailAset() {
                   </td>
                   <td>{asset.nama_aset}</td>
                   <td>{moment(asset.aset_masuk).format("DD MMM YYYY")}</td>
+                  <td>{moment(asset.garansi_dimulai).format("DD MMM YYYY")}</td>
                   <td>
-                    {moment(asset.tanggal_garansi_mulai).format("DD MMM YYYY")}
+                    {moment(asset.garansi_berakhir).format("DD MMM YYYY")}
                   </td>
-                  <td>
-                    {moment(asset.tanggal_garansi_berakhir).format(
-                      "DD MMM YYYY"
-                    )}
-                  </td>
-                  <td>{asset.vendor_id}</td>
+                  <td>{getVendorName(asset.vendor_id)}</td>
                   <td>{asset.kategori_aset}</td>
                   <td>{asset.jumlah_aset}</td>
                   <td>
@@ -312,14 +417,8 @@ function DetailAset() {
         onClose={closeDialog}
         onConfirm={confirmDelete}
       />
-      <div
-        className={`modal ${isEditModalOpen ? "modal-open" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div
-          className="modal-box relative max-w-4xl"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <div className={`modal ${isEditModalOpen ? "modal-open" : ""}`}>
+        <div ref={modalRef} className="modal-box relative max-w-4xl">
           <button
             className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
             onClick={closeEditModal}
@@ -518,12 +617,19 @@ function DetailAset() {
                     id="namaVendor"
                     name="namaVendor"
                     value={editFormData.namaVendor}
-                    onChange={handleInputChange}
+                    onChange={handleVendorChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
-                    <option value="">Pilih vendor</option>
-                    <option value="666d29ced09dff28c5b42e2a">Vendor A</option>
-                    <option value="666d29ced09dff28c5b42e2b">Vendor B</option>
+                    {editFormData.namaVendor && (
+                      <option value={editFormData.namaVendor}>
+                        {editFormData.namaVendor}
+                      </option>
+                    )}
+                    {vendors.map((vendor) => (
+                      <option key={vendor._id} value={vendor.nama_vendor}>
+                        {vendor.nama_vendor}
+                      </option>
+                    ))}
                   </select>
 
                   <label

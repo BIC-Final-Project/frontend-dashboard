@@ -7,30 +7,37 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
 import { postData, fetchData } from "../../utils/utils";
+import moment from "moment"; // pastikan untuk mengimpor moment
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
-    namaAset: "",
+    NamaAset: "",
     merekAset: "",
     kategoriAset: "",
     jumlahAset: "",
     deskripsiAset: "",
-    namaVendor: "",
+    VendorID: "",
     infoVendor: "",
+    tahunProduksi: "",
     jumlahAsetMasuk: "",
     tanggalAsetMasuk: new Date(),
     tanggalGaransiMulai: new Date(),
     tanggalGaransiBerakhir: new Date(),
   });
+  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [fileName, setFileName] = useState("");
   const [vendors, setVendors] = useState([]);
 
+  console.log(formData);
+
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const response = await fetchData(`${BASE_URL_API}api/v1/manage-aset/vendor`);
+        const response = await fetchData(
+          `${BASE_URL_API}api/v1/manage-aset/vendor`
+        );
         setVendors(response.data);
       } catch (error) {
         console.error("Error fetching vendors:", error);
@@ -43,40 +50,91 @@ function TambahAset() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "VendorID") {
+      const selectedVendor = vendors.find(vendor => vendor._id === value);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        infoVendor: selectedVendor ? selectedVendor.telp_vendor : ""
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
       setFileName(file.name);
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const selectedVendor = vendors.find(
+      (vendor) => vendor.nama_vendor === formData.namaVendor
+    );
+    console.log(selectedVendor);
 
-    const selectedVendor = vendors.find(vendor => vendor.nama_vendor === formData.namaVendor);
+    const dataToSubmit = new FormData();
+    dataToSubmit.append("VendorID", formData.VendorID);
+    dataToSubmit.append("NamaAset", formData.NamaAset);
+    dataToSubmit.append("kategori", formData.kategoriAset);
+    dataToSubmit.append("MerekAset", formData.merekAset);
+    dataToSubmit.append("kode", formData.noSeri);
+    dataToSubmit.append("TahunProduksi", formData.tahunProduksi);
+    dataToSubmit.append("deskripsi", formData.deskripsiAset);
+    dataToSubmit.append("jumlah", formData.jumlahAsetMasuk);
+    dataToSubmit.append(
+      "asetmasuk",
+      moment(formData.tanggalAsetMasuk).format("YYYY-MM-DD")
+    );
+    dataToSubmit.append(
+      "garansidimulai",
+      moment(formData.tanggalGaransiMulai).format("YYYY-MM-DD")
+    );
+    dataToSubmit.append(
+      "Garansiberakhir",
+      moment(formData.tanggalGaransiBerakhir).format("YYYY-MM-DD")
+    );
 
-    const dataToSend = {
-      vendor_id: selectedVendor ? selectedVendor._id : "",
-      nama: formData.namaAset,
-      kategori: formData.kategoriAset,
-      merek: formData.merekAset,
-      kode: formData.noSeri,
-      produksi: formData.tahunProduksi,
-      deskripsi: formData.deskripsiAset,
-      jumlah: formData.jumlahAsetMasuk,
-      aset_masuk: formData.tanggalAsetMasuk.toISOString().split('T')[0]
-    };
+    if (imageFile) {
+      dataToSubmit.append("gambar", imageFile, fileName);
+    }
 
     try {
-      await postData(`${BASE_URL_API}api/v1/manage-aset/aset`, dataToSend);
-      enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
+      const result = await postData(
+        `${BASE_URL_API}api/v1/manage-aset/aset`,
+        dataToSubmit,
+        true
+      );
+      if (result.status === 200 || result.status === 201) {
+        enqueueSnackbar("Aset berhasil disimpan.", { variant: "success" });
+        // Reset form
+        setFormData({
+          namaAset: "",
+          merekAset: "",
+          kategoriAset: "",
+          jumlahAset: "",
+          deskripsiAset: "",
+          namaVendor: "",
+          infoVendor: "",
+          jumlahAsetMasuk: "",
+          tanggalAsetMasuk: new Date(),
+          tanggalGaransiMulai: new Date(),
+          tanggalGaransiBerakhir: new Date(),
+        });
+        setImageFile(null);
+        setImagePreview(null);
+        setFileName("");
+      } else {
+        enqueueSnackbar("Gagal menyimpan aset.", { variant: "error" });
+      }
     } catch (error) {
-      console.error("Error posting data:", error);
-      enqueueSnackbar("Gagal menyimpan data!", { variant: "error" });
+      enqueueSnackbar("Gagal menyimpan aset.", { variant: "error" });
     }
   };
 
@@ -96,8 +154,8 @@ function TambahAset() {
               </label>
               <input
                 type="text"
-                id="namaAset"
-                name="namaAset"
+                id="NamaAset"
+                name="NamaAset"
                 value={formData.namaAset}
                 onChange={handleInputChange}
                 placeholder="Masukkan Nama Aset"
@@ -127,12 +185,12 @@ function TambahAset() {
         <CardInput title="Detail Aset">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="merkAset" className="block font-medium">
+              <label htmlFor="merekAset" className="block font-medium">
                 Merek Aset *
               </label>
               <input
                 type="text"
-                id="merkAset"
+                id="merekAset"
                 name="merekAset"
                 value={formData.merekAset}
                 onChange={handleInputChange}
@@ -277,15 +335,15 @@ function TambahAset() {
                 Nama Vendor *
               </label>
               <select
-                id="namaVendor"
-                name="namaVendor"
+                id="VendorID"
+                name="VendorID"
                 value={formData.namaVendor}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih vendor</option>
                 {vendors.map((vendor) => (
-                  <option key={vendor._id} value={vendor.nama_vendor}>
+                  <option key={vendor._id} value={vendor._id}>
                     {vendor.nama_vendor}
                   </option>
                 ))}
@@ -326,9 +384,7 @@ function TambahAset() {
               </label>
               <DatePicker
                 selected={formData.tanggalAsetMasuk}
-                onChange={(date) =>
-                  handleDateChange(date, "tanggalAsetMasuk")
-                }
+                onChange={(date) => handleDateChange(date, "tanggalAsetMasuk")}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 dateFormat="MMMM d, yyyy"
                 wrapperClassName="date-picker"
