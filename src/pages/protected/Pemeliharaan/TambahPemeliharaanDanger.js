@@ -1,19 +1,16 @@
-import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { setPageTitle } from '../../../features/common/headerSlice'
-import TambahAset from '../../../features/Pemeliharaan/tambahAsetDanger'
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setPageTitle } from "../../../features/common/headerSlice";
+import TambahAset from "../../../features/Pemeliharaan/tambahAsetDanger";
 
-function InternalPage(){
-    const dispatch = useDispatch()
+function InternalPage() {
+  const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(setPageTitle({ title : "Tambah Pemeliharaan Darurat"}))
-      }, [])
+  useEffect(() => {
+    dispatch(setPageTitle({ title: "Pemeliharaan Aset" }));
+  }, []);
 
-
-    return(
-        <TambahAset />
-    )
+  return <TambahAset />;
 }
 
-export default InternalPage
+export default InternalPage;

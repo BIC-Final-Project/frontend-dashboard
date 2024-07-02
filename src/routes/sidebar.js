@@ -1,4 +1,3 @@
-/** Icons are imported separatly to reduce build time */
 import Squares2X2Icon from "@heroicons/react/24/outline/Squares2X2Icon";
 import CodeBracketSquareIcon from "@heroicons/react/24/outline/CodeBracketSquareIcon";
 import CalendarDaysIcon from "@heroicons/react/24/outline/CalendarDaysIcon";
@@ -16,8 +15,6 @@ import dashboard from '../assets/icons/dashboard.svg';
 import membership from '../assets/icons/membership.svg';
 import fasilitas from '../assets/icons/fasilitas.svg';
 import bookingfasilitas from '../assets/icons/booking-fasilitas.svg';
-
-
 
 const iconClasses = `h-6 w-6`;
 const submenuIconClasses = `h-5 w-5`;
@@ -121,7 +118,6 @@ const routes = [
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Detail Perencanaan Aset",
       },
-      
     ],
   },
   {
@@ -150,30 +146,12 @@ const routes = [
     path: "/app/riwayat", // url
     icon: <img src={fileSearchIconPath} className={iconClasses} alt="File Search Icon" />, // icon component
     name: "Riwayat Aset", // name that appear in Sidebar
+  },
+  {
+    path: "/app/admin/tambah", // new admin form link
+    icon: <UsersIcon className={iconClasses} />, // you can change the icon as needed
+    name: "Tambah Admin", // name that appear in Sidebar
   }
-  
-  // {
-  //   path: "", //no url needed as this has submenu
-  //   icon: <DocumentTextIcon className={`${iconClasses} inline`} />, // icon component
-  //   name: "Kelola Aset", // name that appear in Sidebar
-  //   submenu: [
-  //     {
-  //       path: "/app/getting-started", // url
-  //       icon: <DocumentTextIcon className={submenuIconClasses} />, // icon component
-  //       name: "Getting Started", // name that appear in Sidebar
-  //     },
-  //     {
-  //       path: "/app/features",
-  //       icon: <TableCellsIcon className={submenuIconClasses} />,
-  //       name: "Features",
-  //     },
-  //     {
-  //       path: "/app/components",
-  //       icon: <CodeBracketSquareIcon className={submenuIconClasses} />,
-  //       name: "Components",
-  //     },
-  //   ],
-  // },
 ];
 
 export default routes;

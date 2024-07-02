@@ -1,19 +1,16 @@
-import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { setPageTitle } from '../../../features/common/headerSlice'
-import TambahAset from '../../../features/Aset/tambahAset'
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setPageTitle } from "../../../features/common/headerSlice";
+import TambahAset from "../../../features/Aset/tambahAset";
 
-function InternalPage(){
-    const dispatch = useDispatch()
+function InternalPage() {
+  const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(setPageTitle({ title : "Tambah Asset"}))
-      }, [])
+  useEffect(() => {
+    dispatch(setPageTitle({ title: "Kelola Aset" }));
+  }, []);
 
-
-    return(
-        <TambahAset />
-    )
+  return <TambahAset />;
 }
 
-export default InternalPage
+export default InternalPage;

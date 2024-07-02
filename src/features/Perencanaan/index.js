@@ -167,7 +167,7 @@ function DesignAset() {
 
   return (
     <>
-      <TitleCard title="Perancangan Aset" topMargin="mt-2">
+      <TitleCard title="Detail Perencanaan Aset" topMargin="mt-2">
         <div className="mb-10">
           <input
             type="text"

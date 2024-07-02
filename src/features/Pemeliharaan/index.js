@@ -175,7 +175,7 @@ function PemeliharaanAset() {
 
   return (
     <>
-      <TitleCard title="Pemeliharaan Aset" topMargin="mt-2">
+      <TitleCard title="Detail Pemeliharaan" topMargin="mt-2">
         <div className="mb-4">
           <input
             type="text"
