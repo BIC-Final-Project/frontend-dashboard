@@ -1,5 +1,4 @@
-// src/features/akunAdmin/index.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard"; // Adjusted path
 import CardInput from "../../components/Cards/CardInput"; // Adjusted path
@@ -22,6 +21,17 @@ const AdminForm = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [adminObj, setAdminObj] = useState(INITIAL_ADMIN_OBJ);
+  const [currentTime, setCurrentTime] = useState("");
+
+  useEffect(() => {
+    let timer;
+    if (errorMessage) {
+      timer = setTimeout(() => {
+        setErrorMessage("");
+      }, 2000); // Clear error message after 3 seconds
+    }
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
 
   const submitForm = async (e) => {
     e.preventDefault();
@@ -52,9 +62,14 @@ const AdminForm = () => {
 
       enqueueSnackbar(message, { variant: "success" });
       setLoading(false);
-    //   setSuccessMessage("User created");
+      setSuccessMessage("User created");
+
       // Reset form
       setAdminObj(INITIAL_ADMIN_OBJ);
+
+      // Update the current time
+      const currentTimeString = new Date().toLocaleString();
+      setCurrentTime(currentTimeString);
     } catch (error) {
       setLoading(false);
       setErrorMessage("Registration failed!");
@@ -128,7 +143,7 @@ const AdminForm = () => {
 
         <div className="flex justify-end mt-4">
           <Button
-            label={loading ? "Creating..." : "Create Admin"}
+            label={loading ? "Creating..." : "Tambah Admin"}
             type="submit"
             disabled={loading}
           />
@@ -141,6 +156,11 @@ const AdminForm = () => {
         {successMessage && (
           <div className="p-4 my-4 text-lg rounded-md bg-green-100 text-green-700 animate-slide-in">
             {successMessage}
+          </div>
+        )}
+        {currentTime && (
+          <div className="p-4 my-4 text-lg rounded-md bg-blue-100 text-blue-700 animate-slide-in">
+            Form submitted at: {currentTime}
           </div>
         )}
       </form>
