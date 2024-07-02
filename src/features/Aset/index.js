@@ -6,6 +6,7 @@ import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
+import { XMarkIcon } from "@heroicons/react/24/outline"; // Make sure this is the correct import
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
@@ -154,9 +155,9 @@ function DetailAset() {
       noSeri: asset.kode_produksi || "",
       tahunProduksi: asset.tahun_produksi || "",
       deskripsiAset: asset.deskripsi_aset || "",
-      namaVendor: vendorData ? `${vendorData.nama_vendor}` : "",
+      namaVendor: vendorData ? vendorData.nama_vendor : "",
       jumlahAsetMasuk: asset.jumlah_aset || "",
-      infoVendor: vendorData ? `${vendorData.telp_vendor}` : "",
+      infoVendor: vendorData ? vendorData.telp_vendor : "",
       tanggalAsetMasuk: parseDate(asset.aset_masuk),
       tanggalGaransiMulai: parseDate(asset.garansi_dimulai),
       tanggalGaransiBerakhir: parseDate(asset.garansi_berakhir),
@@ -169,9 +170,9 @@ function DetailAset() {
   };
 
   const handleVendorChange = async (e) => {
-    const selectedVendorId = e.target.value;
+    const selectedVendorName = e.target.value;
     const selectedVendor = vendors.find(
-      (vendor) => vendor.nama_vendor === selectedVendorId
+      (vendor) => vendor.nama_vendor === selectedVendorName
     );
 
     if (selectedVendor) {
@@ -231,26 +232,26 @@ function DetailAset() {
     );
 
     dataToUpdate.append(
-      "vendor_id",
+      "VendorID",
       selectedVendor ? selectedVendor._id : editFormData.namaVendor
     );
-    dataToUpdate.append("nama", editFormData.namaAset);
+    dataToUpdate.append("NamaAset", editFormData.namaAset);
     dataToUpdate.append("kategori", editFormData.kategoriAset);
-    dataToUpdate.append("merek", editFormData.merekAset);
+    dataToUpdate.append("MerekAset", editFormData.merekAset);
     dataToUpdate.append("kode", editFormData.noSeri);
-    dataToUpdate.append("produksi", editFormData.tahunProduksi);
+    dataToUpdate.append("TahunProduksi", editFormData.tahunProduksi);
     dataToUpdate.append("deskripsi", editFormData.deskripsiAset);
     dataToUpdate.append("jumlah", editFormData.jumlahAsetMasuk);
     dataToUpdate.append(
-      "aset_masuk",
+      "asetmasuk",
       moment(editFormData.tanggalAsetMasuk).format("YYYY-MM-DD")
     );
     dataToUpdate.append(
-      "garansi_mulai",
+      "garansidimulai",
       moment(editFormData.tanggalGaransiMulai).format("YYYY-MM-DD")
     );
     dataToUpdate.append(
-      "garansi_berakhir",
+      "GaransiBerakhir",
       moment(editFormData.tanggalGaransiBerakhir).format("YYYY-MM-DD")
     );
 
@@ -417,276 +418,283 @@ function DetailAset() {
         onClose={closeDialog}
         onConfirm={confirmDelete}
       />
-      <div className={`modal ${isEditModalOpen ? "modal-open" : ""}`}>
-        <div ref={modalRef} className="modal-box relative max-w-4xl">
+
+      {isEditModalOpen && (
+        <div className="modal modal-open" onClick={closeEditModal}>
           <button
-            className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
             onClick={closeEditModal}
           >
-            &times;
+            <XMarkIcon className="w-6 h-6 text-gray-500" />
           </button>
-          <form onSubmit={handleSubmit}>
-            <CardInput title="Identitas Aset">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="namaAset" className="block font-medium">
-                    Nama Aset *
-                  </label>
-                  <input
-                    type="text"
-                    id="namaAset"
-                    name="namaAset"
-                    value={editFormData.namaAset}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Nama Aset"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="kategoriAset" className="block font-medium">
-                    Kategori Aset *
-                  </label>
-                  <select
-                    id="kategoriAset"
-                    name="kategoriAset"
-                    value={editFormData.kategoriAset}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option value="">Pilih jenis kategori aset</option>
-                    <option value="Elektronik">Elektronik</option>
-                    <option value="Perkantoran">Perkantoran</option>
-                  </select>
-                </div>
-              </div>
-            </CardInput>
-
-            <CardInput title="Detail Aset" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="merekAset" className="block font-medium">
-                    Merek Aset *
-                  </label>
-                  <input
-                    type="text"
-                    id="merekAset"
-                    name="merekAset"
-                    value={editFormData.merekAset}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Merek Aset"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="noSeri" className="block font-medium">
-                    No. Seri / Kode Produksi
-                  </label>
-                  <input
-                    type="text"
-                    id="noSeri"
-                    name="noSeri"
-                    value={editFormData.noSeri}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan No. Seri / Kode Produksi"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="tahunProduksi" className="block font-medium">
-                    Tahun Produksi
-                  </label>
-                  <input
-                    type="text"
-                    id="tahunProduksi"
-                    name="tahunProduksi"
-                    value={editFormData.tahunProduksi}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan tahun produksi"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="deskripsiAset" className="block font-medium">
-                    Deskripsi Aset
-                  </label>
-                  <input
-                    type="text"
-                    id="deskripsiAset"
-                    name="deskripsiAset"
-                    value={editFormData.deskripsiAset}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Deskripsi Aset"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="tanggalGaransiMulai"
-                    className="block font-medium"
-                  >
-                    Masa Garansi Dimulai
-                  </label>
-                  <DatePicker
-                    selected={editFormData.tanggalGaransiMulai}
-                    onChange={(date) =>
-                      handleDateChange(date, "tanggalGaransiMulai")
-                    }
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                    dateFormat="MMMM d, yyyy"
-                    wrapperClassName="date-picker"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="tanggalGaransiBerakhir"
-                    className="block font-medium"
-                  >
-                    Masa Garansi Berakhir
-                  </label>
-                  <DatePicker
-                    selected={editFormData.tanggalGaransiBerakhir}
-                    onChange={(date) =>
-                      handleDateChange(date, "tanggalGaransiBerakhir")
-                    }
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                    dateFormat="MMMM d, yyyy"
-                    wrapperClassName="date-picker"
-                  />
-                </div>
-              </div>
-            </CardInput>
-
-            <CardInput title="Dokumen Aset" className="mt-4">
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex items-center justify-center w-full sm:w-24 h-24 bg-gray-200 rounded">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded"
-                    />
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="h-12 w-12 text-gray-400 mx-auto"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 7h18M3 12h18m-9 5h9"
-                      />
-                    </svg>
-                  )}
-                </div>
-
-                <div className="flex items-center w-full sm:w-auto p-2 rounded">
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer text-green-500 hover:text-green-600 border border-green-500 font-medium py-2 px-6 rounded bg-white flex-grow sm:flex-grow-0"
-                  >
-                    Choose File
+          <div
+            ref={modalRef}
+            className="modal-box relative max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleSubmit}>
+              <CardInput title="Identitas Aset">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="namaAset" className="block font-medium">
+                      Nama Aset *
+                    </label>
                     <input
-                      id="file-upload"
-                      name="file-upload"
-                      type="file"
-                      className="sr-only"
-                      accept="image/*"
-                      onChange={handleFileChange}
+                      type="text"
+                      id="namaAset"
+                      name="namaAset"
+                      value={editFormData.namaAset}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Nama Aset"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     />
-                  </label>
-                  <span className="ml-2 text-sm text-gray-500" id="file-chosen">
-                    {imagePreview ? "File chosen" : "No File Chosen"}
-                  </span>
+                  </div>
+                  <div>
+                    <label htmlFor="kategoriAset" className="block font-medium">
+                      Kategori Aset *
+                    </label>
+                    <select
+                      id="kategoriAset"
+                      name="kategoriAset"
+                      value={editFormData.kategoriAset}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    >
+                      <option value="">Pilih jenis kategori aset</option>
+                      <option value="Asset Baru">Asset Baru</option>
+                      <option value="Asset Lama">Asset Lama</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
-                Anda bisa mengunggah satu foto utama aset di sini.
-              </p>
-            </CardInput>
+              </CardInput>
 
-            <CardInput title="Vendor Aset" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="namaVendor" className="block font-medium">
-                    Nama Vendor *
-                  </label>
-                  <select
-                    id="namaVendor"
-                    name="namaVendor"
-                    value={editFormData.namaVendor}
-                    onChange={handleVendorChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    {editFormData.namaVendor && (
-                      <option value={editFormData.namaVendor}>
-                        {editFormData.namaVendor}
-                      </option>
+              <CardInput title="Detail Aset" className="mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="merekAset" className="block font-medium">
+                      Merek Aset *
+                    </label>
+                    <input
+                      type="text"
+                      id="merekAset"
+                      name="merekAset"
+                      value={editFormData.merekAset}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Merek Aset"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="noSeri" className="block font-medium">
+                      No. Seri / Kode Produksi
+                    </label>
+                    <input
+                      type="text"
+                      id="noSeri"
+                      name="noSeri"
+                      value={editFormData.noSeri}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan No. Seri / Kode Produksi"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="tahunProduksi" className="block font-medium">
+                      Tahun Produksi
+                    </label>
+                    <input
+                      type="text"
+                      id="tahunProduksi"
+                      name="tahunProduksi"
+                      value={editFormData.tahunProduksi}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan tahun produksi"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="deskripsiAset" className="block font-medium">
+                      Deskripsi Aset
+                    </label>
+                    <input
+                      type="text"
+                      id="deskripsiAset"
+                      name="deskripsiAset"
+                      value={editFormData.deskripsiAset}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Deskripsi Aset"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="tanggalGaransiMulai"
+                      className="block font-medium"
+                    >
+                      Masa Garansi Dimulai
+                    </label>
+                    <DatePicker
+                      selected={editFormData.tanggalGaransiMulai}
+                      onChange={(date) =>
+                        handleDateChange(date, "tanggalGaransiMulai")
+                      }
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      dateFormat="MMMM d, yyyy"
+                      wrapperClassName="date-picker"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="tanggalGaransiBerakhir"
+                      className="block font-medium"
+                    >
+                      Masa Garansi Berakhir
+                    </label>
+                    <DatePicker
+                      selected={editFormData.tanggalGaransiBerakhir}
+                      onChange={(date) =>
+                        handleDateChange(date, "tanggalGaransiBerakhir")
+                      }
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      dateFormat="MMMM d, yyyy"
+                      wrapperClassName="date-picker"
+                    />
+                  </div>
+                </div>
+              </CardInput>
+
+              <CardInput title="Dokumen Aset" className="mt-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center justify-center w-full sm:w-24 h-24 bg-gray-200 rounded">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover rounded"
+                      />
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="h-12 w-12 text-gray-400 mx-auto"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 7h18M3 12h18m-9 5h9"
+                        />
+                      </svg>
                     )}
-                    {vendors.map((vendor) => (
-                      <option key={vendor._id} value={vendor.nama_vendor}>
-                        {vendor.nama_vendor}
-                      </option>
-                    ))}
-                  </select>
+                  </div>
 
-                  <label
-                    htmlFor="jumlahAsetMasuk"
-                    className="block font-medium mt-4"
-                  >
-                    Jumlah Aset Masuk *
-                  </label>
-                  <input
-                    type="text"
-                    id="jumlahAsetMasuk"
-                    name="jumlahAsetMasuk"
-                    value={editFormData.jumlahAsetMasuk}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan jumlah aset masuk"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
+                  <div className="flex items-center w-full sm:w-auto p-2 rounded">
+                    <label
+                      htmlFor="file-upload"
+                      className="cursor-pointer text-green-500 hover:text-green-600 border border-green-500 font-medium py-2 px-6 rounded bg-white flex-grow sm:flex-grow-0"
+                    >
+                      Choose File
+                      <input
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        className="sr-only"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                    <span className="ml-2 text-sm text-gray-500" id="file-chosen">
+                      {imagePreview ? "File chosen" : "No File Chosen"}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="infoVendor" className="block font-medium">
-                    Informasi Vendor / No Telepon
-                  </label>
-                  <input
-                    type="text"
-                    id="infoVendor"
-                    name="infoVendor"
-                    value={editFormData.infoVendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan informasi vendor"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
+                <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
+                  Anda bisa mengunggah satu foto utama aset di sini.
+                </p>
+              </CardInput>
 
-                  <label
-                    htmlFor="tanggalAsetMasuk"
-                    className="block font-medium mt-4"
-                  >
-                    Tgl Aset Masuk *
-                  </label>
-                  <DatePicker
-                    selected={editFormData.tanggalAsetMasuk}
-                    onChange={(date) =>
-                      handleDateChange(date, "tanggalAsetMasuk")
-                    }
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                    dateFormat="MMMM d, yyyy"
-                    wrapperClassName="date-picker"
-                  />
+              <CardInput title="Vendor Aset" className="mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="namaVendor" className="block font-medium">
+                      Nama Vendor *
+                    </label>
+                    <select
+                      id="namaVendor"
+                      name="namaVendor"
+                      value={editFormData.namaVendor}
+                      onChange={handleVendorChange}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    >
+                      {editFormData.namaVendor && (
+                        <option value={editFormData.namaVendor}>
+                          {editFormData.namaVendor}
+                        </option>
+                      )}
+                      {vendors.map((vendor) => (
+                        <option key={vendor._id} value={vendor.nama_vendor}>
+                          {vendor.nama_vendor}
+                        </option>
+                      ))}
+                    </select>
+
+                    <label
+                      htmlFor="jumlahAsetMasuk"
+                      className="block font-medium mt-4"
+                    >
+                      Jumlah Aset Masuk *
+                    </label>
+                    <input
+                      type="text"
+                      id="jumlahAsetMasuk"
+                      name="jumlahAsetMasuk"
+                      value={editFormData.jumlahAsetMasuk}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan jumlah aset masuk"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="infoVendor" className="block font-medium">
+                      Informasi Vendor / No Telepon
+                    </label>
+                    <input
+                      type="text"
+                      id="infoVendor"
+                      name="infoVendor"
+                      value={editFormData.infoVendor}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan informasi vendor"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+
+                    <label
+                      htmlFor="tanggalAsetMasuk"
+                      className="block font-medium mt-4"
+                    >
+                      Tgl Aset Masuk *
+                    </label>
+                    <DatePicker
+                      selected={editFormData.tanggalAsetMasuk}
+                      onChange={(date) =>
+                        handleDateChange(date, "tanggalAsetMasuk")
+                      }
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      dateFormat="MMMM d, yyyy"
+                      wrapperClassName="date-picker"
+                    />
+                  </div>
                 </div>
+              </CardInput>
+
+              <div className="flex justify-end mt-4">
+                <Button label="Simpan" onClick={handleSubmit} />
               </div>
-            </CardInput>
-
-            <div className="flex justify-end mt-4">
-              <Button label="Simpan" onClick={handleSubmit} />
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

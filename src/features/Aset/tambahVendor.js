@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSnackbar } from 'notistack';
+import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import Button from "../../components/Button";
@@ -12,29 +12,49 @@ function TambahVendor() {
     nama_vendor: "",
     telp_vendor: "",
     alamat_vendor: "",
-    jenis_vendor: ""
+    jenis_vendor: "",
   });
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    // Validate form
+    if (!formData.nama_vendor || !formData.telp_vendor) {
+      enqueueSnackbar(
+        "Semua bagian yang diberi tanda bintang (*) harus diisi!",
+        { variant: "warning" }
+      );
+      return;
+    }
+
     try {
-      const response = await postData(`${BASE_URL_API}api/v1/manage-aset/vendor`, formData);
+      const response = await postData(
+        `${BASE_URL_API}api/v1/manage-aset/vendor`,
+        formData
+      );
       if (response.status === 200 || response.status === 201) {
-        enqueueSnackbar('Vendor berhasil ditambahkan!', { variant: 'success' });
-      }else{
-        enqueueSnackbar('Gagal menambahkan vendor!', { variant: 'error' });
+        enqueueSnackbar("Vendor berhasil ditambahkan!", { variant: "success" });
+        // Reset form
+        setFormData({
+          nama_vendor: "",
+          telp_vendor: "",
+          alamat_vendor: "",
+          jenis_vendor: "",
+        });
+      } else {
+        enqueueSnackbar("Gagal menambahkan vendor!", { variant: "error" });
       }
     } catch (error) {
-      console.error('Error posting data:', error);
-      enqueueSnackbar('Gagal menambahkan vendor!', { variant: 'error' });
+      console.error("Error posting data:", error);
+      enqueueSnackbar("Gagal menambahkan vendor!", { variant: "error" });
     }
   };
 
@@ -108,10 +128,7 @@ function TambahVendor() {
         </CardInput>
 
         <div className="flex justify-end mt-4">
-          <Button
-            label="Simpan Vendor"
-            type="submit"
-          />
+          <Button label="Simpan Vendor" type="submit" />
         </div>
       </form>
     </TitleCard>

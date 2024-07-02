@@ -1036,8 +1036,10 @@
   "resolved" "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.2.tgz"
   "version" "0.2.2"
 
-"@heroicons/react@^2.0.13":
-  "version" "2.0.13"
+"@heroicons/react@^2.1.4":
+  "integrity" "sha512-ju0wj0wwrUTMQ2Yceyrma7TKuI3BpSjp+qKqV81K9KGcUHdvTMdiwfRc2cwXBp3uXtKuDZkh0v03nWOQnJFv2Q=="
+  "resolved" "https://registry.npmjs.org/@heroicons/react/-/react-2.1.4.tgz"
+  "version" "2.1.4"
 
 "@humanwhocodes/config-array@^0.11.6":
   "version" "0.11.7"

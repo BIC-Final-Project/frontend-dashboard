@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
 import { postData, fetchData } from "../../utils/utils";
-import moment from "moment"; // pastikan untuk mengimpor moment
+import moment from "moment";
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
@@ -30,8 +30,6 @@ function TambahAset() {
   const [fileName, setFileName] = useState("");
   const [vendors, setVendors] = useState([]);
 
-  console.log(formData);
-
   useEffect(() => {
     const fetchVendors = async () => {
       try {
@@ -52,11 +50,11 @@ function TambahAset() {
     const { name, value } = event.target;
 
     if (name === "VendorID") {
-      const selectedVendor = vendors.find(vendor => vendor._id === value);
+      const selectedVendor = vendors.find((vendor) => vendor._id === value);
       setFormData((prev) => ({
         ...prev,
         [name]: value,
-        infoVendor: selectedVendor ? selectedVendor.telp_vendor : ""
+        infoVendor: selectedVendor ? selectedVendor.telp_vendor : "",
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -74,10 +72,21 @@ function TambahAset() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const selectedVendor = vendors.find(
-      (vendor) => vendor.nama_vendor === formData.namaVendor
-    );
-    console.log(selectedVendor);
+
+    // Validate form
+    if (
+      !formData.NamaAset ||
+      !formData.merekAset ||
+      !formData.kategoriAset ||
+      !formData.jumlahAsetMasuk ||
+      !formData.VendorID
+    ) {
+      enqueueSnackbar(
+        "Semua bagian yang diberi tanda bintang (*) harus diisi!",
+        { variant: "warning" }
+      );
+      return;
+    }
 
     const dataToSubmit = new FormData();
     dataToSubmit.append("VendorID", formData.VendorID);
@@ -115,12 +124,12 @@ function TambahAset() {
         enqueueSnackbar("Aset berhasil disimpan.", { variant: "success" });
         // Reset form
         setFormData({
-          namaAset: "",
+          NamaAset: "",
           merekAset: "",
           kategoriAset: "",
           jumlahAset: "",
           deskripsiAset: "",
-          namaVendor: "",
+          VendorID: "",
           infoVendor: "",
           jumlahAsetMasuk: "",
           tanggalAsetMasuk: new Date(),
@@ -146,17 +155,17 @@ function TambahAset() {
     <TitleCard title="Tambah Aset" topMargin="mt-2">
       <form onSubmit={handleSubmit}>
         {/* Bagian Identitas Aset menggunakan CardInput */}
-        <CardInput title="Identitas Aset">
+        <CardInput title="Identitas Aset" className="rounded-none">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="namaAset" className="block font-medium">
+              <label htmlFor="NamaAset" className="block font-medium">
                 Nama Aset *
               </label>
               <input
                 type="text"
                 id="NamaAset"
                 name="NamaAset"
-                value={formData.namaAset}
+                value={formData.NamaAset}
                 onChange={handleInputChange}
                 placeholder="Masukkan Nama Aset"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -182,7 +191,7 @@ function TambahAset() {
         </CardInput>
 
         {/* Bagian Detail Aset menggunakan CardInput */}
-        <CardInput title="Detail Aset">
+        <CardInput title="Detail Aset" className="rounded-none">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="merekAset" className="block font-medium">
@@ -337,7 +346,7 @@ function TambahAset() {
               <select
                 id="VendorID"
                 name="VendorID"
-                value={formData.namaVendor}
+                value={formData.VendorID}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >

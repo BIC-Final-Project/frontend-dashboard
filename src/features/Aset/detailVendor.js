@@ -5,6 +5,7 @@ import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import Button from "../../components/Button";
 import DialogComponent from "../../components/Dialog/InformationDialog";
 import BASE_URL_API from "../../config";
@@ -12,6 +13,7 @@ import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
 
 function DetailVendor() {
   const [vendors, setVendors] = useState([]);
+  const [allVendors, setAllVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [modal, setModal] = useState({
@@ -35,23 +37,26 @@ function DetailVendor() {
     fetchVendors();
   }, []);
 
+  useEffect(() => {
+    filterVendors();
+  }, [searchQuery]);
+
   const fetchVendors = async () => {
     try {
       const response = await fetchData(
         `${BASE_URL_API}api/v1/manage-aset/vendor`
       );
       if (response && response.data) {
-        // Add index to each vendor
         const vendorsWithIndex = response.data.map((vendor, index) => ({
           ...vendor,
           index: index,
         }));
 
-        // Sort vendors based on index in descending order
         const sortedVendors = vendorsWithIndex.sort(
           (a, b) => b.index - a.index
         );
 
+        setAllVendors(sortedVendors);
         setVendors(sortedVendors);
         setTotalPages(Math.ceil(sortedVendors.length / 10));
       } else {
@@ -60,6 +65,15 @@ function DetailVendor() {
     } catch (error) {
       console.error("Axios error:", error.message);
     }
+  };
+
+  const filterVendors = () => {
+    const filteredVendors = allVendors.filter((vendor) =>
+      vendor.nama_vendor.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setVendors(filteredVendors);
+    setTotalPages(Math.ceil(filteredVendors.length / 10));
+    setCurrentPage(1);
   };
 
   const handleDeleteVendor = (id) => {
@@ -101,6 +115,7 @@ function DetailVendor() {
       );
       if (response.status === 200) {
         setVendors(vendors.filter((vendor) => vendor._id !== modal.id));
+        setAllVendors(allVendors.filter((vendor) => vendor._id !== modal.id));
         enqueueSnackbar("Vendor berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus vendor.", { variant: "error" });
@@ -235,85 +250,93 @@ function DetailVendor() {
         onConfirm={confirmDelete}
       />
 
-      <div
-        className={`modal ${isEditModalOpen ? "modal-open" : ""}`}
-        onClick={closeEditModal}
-      >
-        <div
-          className="modal-box relative max-w-4xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <form onSubmit={handleSubmit}>
-            <CardInput title="Identitas Vendor">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="nama_vendor" className="block font-medium">
-                    Nama Vendor *
-                  </label>
-                  <input
-                    type="text"
-                    id="nama_vendor"
-                    name="nama_vendor"
-                    value={editFormData.nama_vendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Nama Vendor"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
+      {isEditModalOpen && (
+        <div className="modal modal-open" onClick={closeEditModal}>
+          <button
+            className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
+            onClick={closeEditModal}
+          >
+            <XMarkIcon className="w-6 h-6 text-gray-500" />
+          </button>
+          <div
+            className="modal-box relative max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleSubmit}>
+              <CardInput title="Identitas Vendor">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="nama_vendor" className="block font-medium">
+                      Nama Vendor *
+                    </label>
+                    <input
+                      type="text"
+                      id="nama_vendor"
+                      name="nama_vendor"
+                      value={editFormData.nama_vendor}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Nama Vendor"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="telp_vendor" className="block font-medium">
+                      No Tlp Vendor *
+                    </label>
+                    <input
+                      type="text"
+                      id="telp_vendor"
+                      name="telp_vendor"
+                      value={editFormData.telp_vendor}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan No Tlp Vendor"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="telp_vendor" className="block font-medium">
-                    No Tlp Vendor *
-                  </label>
-                  <input
-                    type="text"
-                    id="telp_vendor"
-                    name="telp_vendor"
-                    value={editFormData.telp_vendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan No Tlp Vendor"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
+              </CardInput>
+              <CardInput title="Detail Vendor">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="alamat_vendor"
+                      className="block font-medium"
+                    >
+                      Alamat *
+                    </label>
+                    <input
+                      type="text"
+                      id="alamat_vendor"
+                      name="alamat_vendor"
+                      value={editFormData.alamat_vendor}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Alamat"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="jenis_vendor" className="block font-medium">
+                      Jenis Vendor *
+                    </label>
+                    <input
+                      type="text"
+                      id="jenis_vendor"
+                      name="jenis_vendor"
+                      value={editFormData.jenis_vendor}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan Jenis Vendor"
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
                 </div>
+              </CardInput>
+              <div className="flex justify-end mt-4">
+                <Button label="Simpan Vendor" onClick={handleSubmit} />
               </div>
-            </CardInput>
-            <CardInput title="Detail Vendor">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="alamat_vendor" className="block font-medium">
-                    Alamat *
-                  </label>
-                  <input
-                    type="text"
-                    id="alamat_vendor"
-                    name="alamat_vendor"
-                    value={editFormData.alamat_vendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Alamat"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="jenis_vendor" className="block font-medium">
-                    Jenis Vendor *
-                  </label>
-                  <input
-                    type="text"
-                    id="jenis_vendor"
-                    name="jenis_vendor"
-                    value={editFormData.jenis_vendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Jenis Vendor"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-              </div>
-            </CardInput>
-            <div className="flex justify-end mt-4">
-              <Button label="Simpan Vendor" onClick={handleSubmit} />
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       <DialogComponent isOpen={isDialogOpen} onClose={closeDialogComponent} />
     </>
