@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard"; // Adjusted path
 import CardInput from "../../components/Cards/CardInput"; // Adjusted path
-import Button from "../../components/Button"; // Adjusted path
-import ErrorText from "../../components/Typography/ErrorText"; // Adjusted path
+import Button from "../../components/Button"; // Adjusted pathdjusted path
 import InputText from "../../components/Input/InputText"; // Adjusted path
 import BASE_URL_API from "../../config"; // Adjusted path
 import axios from "axios";
@@ -39,13 +38,13 @@ const AdminForm = () => {
     setSuccessMessage("");
 
     if (adminObj.name.trim() === "")
-      return setErrorMessage("Name is required!");
+      return enqueueSnackbar("Name is required!", { variant: "error" });
     if (adminObj.emailId.trim() === "")
-      return setErrorMessage("Email is required!");
+      return enqueueSnackbar("Email is required!", { variant: "error" });
     if (adminObj.phoneNumber.trim() === "")
-      return setErrorMessage("Phone Number is required!");
+      return enqueueSnackbar("Phone number is required!", { variant: "error" });
     if (adminObj.password.trim() === "")
-      return setErrorMessage("Password is required!");
+      return enqueueSnackbar("Password is required!", { variant: "error" });
 
     setLoading(true);
 
@@ -148,21 +147,6 @@ const AdminForm = () => {
             disabled={loading}
           />
         </div>
-        {errorMessage && (
-          <div className="p-4 my-4 text-lg rounded-md bg-red-100 text-red-700 animate-slide-in">
-            {errorMessage}
-          </div>
-        )}
-        {successMessage && (
-          <div className="p-4 my-4 text-lg rounded-md bg-green-100 text-green-700 animate-slide-in">
-            {successMessage}
-          </div>
-        )}
-        {currentTime && (
-          <div className="p-4 my-4 text-lg rounded-md bg-blue-100 text-blue-700 animate-slide-in">
-            Form submitted at: {currentTime}
-          </div>
-        )}
       </form>
       <style jsx>{`
         @keyframes slide-in {
