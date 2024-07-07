@@ -8,7 +8,7 @@ import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FunnelIcon } from '@heroicons/react/24/outline'; // Gunakan ikon yang sesuai
+import { FunnelIcon } from "@heroicons/react/24/outline"; // Use the correct icon
 
 function RiwayatAset() {
   const [assets, setAssets] = useState([]);
@@ -22,19 +22,6 @@ function RiwayatAset() {
   const [filterConditions, setFilterConditions] = useState({
     kondisi: "",
     status: "",
-  });
-
-  const [formData, setFormData] = useState({
-    namaAset: "",
-    kondisiAset: "",
-    usiaAsetSaatIni: "",
-    maksimalUsiaAset: "",
-    tahunProduksi: "",
-    deskripsiKerusakan: "",
-    tanggalRencanaPemeliharaan: new Date(),
-    statusPerencanaan: "",
-    vendorPengelola: "",
-    infoVendor: "",
   });
 
   useEffect(() => {
@@ -95,21 +82,6 @@ function RiwayatAset() {
     setIsModalOpen(false);
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleDateChange = (field, date) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      [field]: date,
-    }));
-  };
-
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
   };
@@ -131,11 +103,16 @@ function RiwayatAset() {
   };
 
   const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, checked } = e.target;
     setFilterConditions((prevState) => ({
       ...prevState,
-      [name]: value,
+      [name]: checked ? value : "",
     }));
+  };
+
+  const handleFilterApply = () => {
+    // Apply filtering logic here
+    setIsFilterOpen(false);
   };
 
   return (
@@ -149,48 +126,13 @@ function RiwayatAset() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
-          <button className="btn btn-white flex items-center" onClick={handleFilterClick}>
+          <button
+            className="btn btn-white flex items-center"
+            onClick={handleFilterClick}
+          >
             <FunnelIcon className="w-5 h-5 mr-2" />
             Tambahkan Filter
           </button>
-          {isFilterOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white shadow-lg rounded-lg z-10">
-              <div className="p-4">
-                <div className="mb-2">
-                  <label htmlFor="kondisi" className="block font-medium">
-                    Kondisi
-                  </label>
-                  <select
-                    id="kondisi"
-                    name="kondisi"
-                    value={filterConditions.kondisi}
-                    onChange={handleFilterChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option value="">Pilih Kondisi</option>
-                    <option value="Baik">Baik</option>
-                    <option value="Rusak">Rusak</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="status" className="block font-medium">
-                    Status
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={filterConditions.status}
-                    onChange={handleFilterChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option value="">Pilih Status</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
@@ -250,12 +192,68 @@ function RiwayatAset() {
         </div>
       </TitleCard>
 
+      {isFilterOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="bg-white p-6 rounded-lg shadow-lg z-10 w-[465px] h-[300px]">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-center w-full">
+                Filter Kategori
+              </h2>
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                &times;
+              </button>
+            </div>
+            <p className="mb-4 text-gray-500 text-center">
+              Filter kategori dapat melakukan seleksi dari aset
+            </p>
+            <div className="mb-4 flex items-center border rounded-lg p-2">
+              <input
+                type="checkbox"
+                id="statusBerhasil"
+                name="status"
+                value="Perbaikan Berhasil"
+                onChange={handleFilterChange}
+                className="form-checkbox h-4 w-4 text-[#4A5B34] rounded-md"
+                checked={filterConditions.status === "Perbaikan Berhasil"}
+              />
+              <label htmlFor="statusBerhasil" className="cursor-pointer ml-2">
+                Perbaikan Berhasil
+              </label>
+            </div>
+            <div className="mb-4 flex items-center border rounded-lg p-2">
+              <input
+                type="checkbox"
+                id="statusGagal"
+                name="status"
+                value="Perbaikan Gagal"
+                onChange={handleFilterChange}
+                className="form-checkbox h-4 w-4 text-[#4A5B34] rounded-md"
+                checked={filterConditions.status === "Perbaikan Gagal"}
+              />
+              <label htmlFor="statusGagal" className="cursor-pointer ml-2">
+                Perbaikan Gagal
+              </label>
+            </div>
+            <button
+              className="btn bg-[#4A5B34] text-white w-full h-[50px] text-lg hover:bg-[#354824]"
+              onClick={handleFilterApply}
+            >
+              Konfirmasi
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         className={`modal ${isModalOpen ? "modal-open" : ""}`}
         onClick={handleCloseModal}
       >
         <div
-          className="modal-box relative max-w-4xl"
+          className="modal-box relative max-w-4xl p-4"
           onClick={(e) => e.stopPropagation()}
         >
           <CardInput title="Identitas Aset">
@@ -267,9 +265,10 @@ function RiwayatAset() {
                 <select
                   id="namaAset"
                   name="namaAset"
-                  value={formData.namaAset}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.name || ""}
+                  onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 >
                   <option>Pilih Aset Rencana pemeliharaan</option>
                   <option value="Aset1">Aset 1</option>
@@ -283,9 +282,10 @@ function RiwayatAset() {
                 <select
                   id="kondisiAset"
                   name="kondisiAset"
-                  value={formData.kondisiAset}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.condition || ""}
+                  onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 >
                   <option>Pilih jenis kondisi aset</option>
                   <option value="Baik">Baik</option>
@@ -305,10 +305,11 @@ function RiwayatAset() {
                   type="text"
                   id="usiaAsetSaatIni"
                   name="usiaAsetSaatIni"
-                  value={formData.usiaAsetSaatIni}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.age || ""}
+                  onChange={() => {}}
                   placeholder="Masukkan usia aset saat ini"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 />
               </div>
               <div>
@@ -319,10 +320,11 @@ function RiwayatAset() {
                   type="text"
                   id="maksimalUsiaAset"
                   name="maksimalUsiaAset"
-                  value={formData.maksimalUsiaAset}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.maxAge || ""}
+                  onChange={() => {}}
                   placeholder="Masukkan maksimal usia aset"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 />
               </div>
               <div>
@@ -333,24 +335,29 @@ function RiwayatAset() {
                   type="text"
                   id="tahunProduksi"
                   name="tahunProduksi"
-                  value={formData.tahunProduksi}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.productionYear || ""}
+                  onChange={() => {}}
                   placeholder="Masukkan tahun produksi"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 />
               </div>
               <div>
-                <label htmlFor="deskripsiKerusakan" className="block font-medium">
+                <label
+                  htmlFor="deskripsiKerusakan"
+                  className="block font-medium"
+                >
                   Deskripsi Kerusakan
                 </label>
                 <input
                   type="text"
                   id="deskripsiKerusakan"
                   name="deskripsiKerusakan"
-                  value={formData.deskripsiKerusakan}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.damageDescription || ""}
+                  onChange={() => {}}
                   placeholder="Masukkan Deskripsi Kerusakan"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 />
               </div>
               <div>
@@ -361,25 +368,28 @@ function RiwayatAset() {
                   Tanggal Rencana Pemeliharaan *
                 </label>
                 <DatePicker
-                  selected={formData.tanggalRencanaPemeliharaan}
-                  onChange={(date) =>
-                    handleDateChange("tanggalRencanaPemeliharaan", date)
-                  }
+                  selected={selectedAsset?.maintenanceDate || new Date()}
+                  onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   dateFormat="MMMM d, yyyy"
                   wrapperClassName="date-picker"
+                  disabled
                 />
               </div>
               <div>
-                <label htmlFor="statusPerencanaan" className="block font-medium">
+                <label
+                  htmlFor="statusPerencanaan"
+                  className="block font-medium"
+                >
                   Status Perencanaan *
                 </label>
                 <select
                   id="statusPerencanaan"
                   name="statusPerencanaan"
-                  value={formData.statusPerencanaan}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.status || ""}
+                  onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 >
                   <option>Pilih status perencanaan</option>
                   <option value="direncanakan">Direncanakan</option>
@@ -399,9 +409,10 @@ function RiwayatAset() {
                 <select
                   id="vendorPengelola"
                   name="vendorPengelola"
-                  value={formData.vendorPengelola}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.vendor || ""}
+                  onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 >
                   <option>Pilih vendor</option>
                   <option value="Vendor1">Vendor 1</option>
@@ -416,10 +427,11 @@ function RiwayatAset() {
                   type="text"
                   id="infoVendor"
                   name="infoVendor"
-                  value={formData.infoVendor}
-                  onChange={handleInputChange}
+                  value={selectedAsset?.vendorInfo || ""}
+                  onChange={() => {}}
                   placeholder="Masukkan informasi vendor"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
                 />
               </div>
             </div>

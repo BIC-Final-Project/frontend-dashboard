@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
-import CardInput from "../../components/Cards/CardInput"; // Pastikan Anda mengimpor komponen CardInput
+import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
+import BASE_URL_API from "../../config";
+import { fetchData, updateData, deleteData } from "../../utils/utils";
+
+const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
+const ITEMS_PER_PAGE = 10;
 
 function PemeliharaanAset() {
   const [assets, setAssets] = useState([]);
@@ -23,71 +27,30 @@ function PemeliharaanAset() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    namaAset: "",
-    kondisiAset: "",
-    usiaAsetSaatIni: "",
-    maksimalUsiaAset: "",
-    tahunProduksi: "",
-    deskripsiKerusakan: "",
-    tanggalPemeliharaanAset: new Date(),
-    statusPemeliharaan: "",
-    vendorPengelola: "",
-    infoVendor: "",
-    namaPenanggungJawab: "",
-    deskripsiPemeliharaan: "",
-    tanggalPemeliharaan: new Date(),
-    perkiraanWaktuPemeliharaan: "",
+    rencana_id: "",
+    kondisi_stlh_perbaikan: "",
+    status_pemeliharaan: "",
+    penanggung_jawab: "",
+    deskripsi: "",
+    tgl_dilakukan: new Date(),
+    waktu_pemeliharaan: new Date(),
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetchAssets(currentPage, searchQuery);
-  }, [currentPage, searchQuery]);
+    fetchAssets();
+  }, []);
 
-  const fetchAssets = async (page, query) => {
+  const fetchAssets = async () => {
     try {
-      const pageSize = 10;
-      const response = await axios.get(
-        `URL_API?page=${page}&pageSize=${pageSize}&search=${query}`
-      );
+      const response = await fetchData(API_URL);
       const result = response.data;
-      if (result.code === 0) {
-        setAssets(result.data);
-        setTotalPages(Math.ceil(result.totalCount / pageSize));
-      } else {
-        throw new Error("API error: " + result.info);
-      }
+      setAssets(result.reverse());
+      setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
-      loadDummyData();
     }
-  };
-
-  const loadDummyData = () => {
-    setAssets([
-      {
-        id: 1,
-        name: "Laptop HP",
-        maintenanceDate: "2023-05-01",
-        vendor: "HP Inc.",
-        responsiblePerson: "John Doe",
-        condition: "Good",
-        status: "Completed",
-        estimatedTime: "2 hours",
-      },
-      {
-        id: 2,
-        name: "Printer Epson",
-        maintenanceDate: "2023-04-15",
-        vendor: "Epson",
-        responsiblePerson: "Jane Doe",
-        condition: "Needs Repair",
-        status: "Pending",
-        estimatedTime: "3 hours",
-      },
-    ]);
-    setTotalPages(1);
   };
 
   const handleDeleteAsset = (id) => {
@@ -101,20 +64,13 @@ function PemeliharaanAset() {
 
   const handleEditAsset = (asset) => {
     setEditFormData({
-      namaAset: asset.name,
-      kondisiAset: asset.condition,
-      usiaAsetSaatIni: "", // Sesuaikan dengan data yang ada
-      maksimalUsiaAset: "", // Sesuaikan dengan data yang ada
-      tahunProduksi: "", // Sesuaikan dengan data yang ada
-      deskripsiKerusakan: "", // Sesuaikan dengan data yang ada
-      tanggalPemeliharaanAset: new Date(asset.maintenanceDate),
-      statusPemeliharaan: asset.status,
-      vendorPengelola: asset.vendor,
-      infoVendor: "", // Sesuaikan dengan data yang ada
-      namaPenanggungJawab: asset.responsiblePerson,
-      deskripsiPemeliharaan: "", // Sesuaikan dengan data yang ada
-      tanggalPemeliharaan: new Date(asset.maintenanceDate),
-      perkiraanWaktuPemeliharaan: asset.estimatedTime,
+      rencana_id: asset.rencana_id,
+      kondisi_stlh_perbaikan: asset.kondisi_stlh_perbaikan,
+      status_pemeliharaan: asset.status_pemeliharaan,
+      penanggung_jawab: asset.penanggung_jawab,
+      deskripsi: asset.deskripsi,
+      tgl_dilakukan: new Date(asset.tgl_dilakukan),
+      waktu_pemeliharaan: new Date(asset.waktu_pemeliharaan),
     });
     setIsEditModalOpen(true);
   };
@@ -129,13 +85,9 @@ function PemeliharaanAset() {
 
   const confirmDelete = async () => {
     try {
-      const response = await axios.post("URL_DELETE_ASSET", { id: modal.id });
-      if (response.status === 200) {
-        setAssets(assets.filter((asset) => asset.id !== modal.id));
-        enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
-      } else {
-        enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
-      }
+      await deleteData(`${API_URL}/${modal.id}`);
+      setAssets(assets.filter((asset) => asset._id !== modal.id));
+      enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
     } catch (error) {
       enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
     }
@@ -151,10 +103,20 @@ function PemeliharaanAset() {
     setEditFormData({ ...editFormData, [name]: date });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Tambahkan logika untuk menyimpan data aset yang diubah
-    closeEditModal();
+    try {
+      await updateData(`${API_URL}/${editFormData.rencana_id}`, {
+        ...editFormData,
+        tgl_dilakukan: moment(editFormData.tgl_dilakukan).format("DD-MM-YYYY"),
+        waktu_pemeliharaan: moment(editFormData.waktu_pemeliharaan).format("DD-MM-YYYY"),
+      });
+      fetchAssets();
+      enqueueSnackbar("Data berhasil diperbarui!", { variant: "success" });
+      closeEditModal();
+    } catch (error) {
+      enqueueSnackbar("Gagal memperbarui data!", { variant: "error" });
+    }
   };
 
   const goToNextPage = () => {
@@ -173,9 +135,23 @@ function PemeliharaanAset() {
     setSearchQuery(event.target.value);
   };
 
+  const filteredAssets = assets.filter(
+    (asset) =>
+      asset.rencana_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.kondisi_stlh_perbaikan.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.status_pemeliharaan.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.penanggung_jawab.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.deskripsi.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <>
-      <TitleCard title="Detail Pemeliharaan" topMargin="mt-2">
+      <TitleCard title="Detail Pemeliharaan Aset" topMargin="mt-2">
         <div className="mb-4">
           <input
             type="text"
@@ -189,30 +165,28 @@ function PemeliharaanAset() {
           <table className="table w-full">
             <thead>
               <tr>
-                <th>Nama Aset</th>
-                <th>Tgl Pemeliharaan</th>
-                <th>Vendor Pengelola</th>
+                <th>Rencana ID</th>
+                <th>Tgl Dilakukan</th>
                 <th>Penanggung Jawab</th>
                 <th>Kondisi Aset</th>
                 <th>Status</th>
-                <th>Perkiraan Waktu Pemeliharaan</th>
+                <th>Deskripsi</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {assets.map((asset) => (
-                <tr key={asset.id}>
-                  <td>{asset.name}</td>
-                  <td>{moment(asset.maintenanceDate).format("DD MMM YYYY")}</td>
-                  <td>{asset.vendor}</td>
-                  <td>{asset.responsiblePerson}</td>
-                  <td>{asset.condition}</td>
-                  <td>{asset.status}</td>
-                  <td>{asset.estimatedTime}</td>
+              {paginatedAssets.map((asset) => (
+                <tr key={asset._id}>
+                  <td>{asset.rencana_id}</td>
+                  <td>{moment(asset.tgl_dilakukan).format("DD MMM YYYY")}</td>
+                  <td>{asset.penanggung_jawab}</td>
+                  <td>{asset.kondisi_stlh_perbaikan}</td>
+                  <td>{asset.status_pemeliharaan}</td>
+                  <td>{asset.deskripsi}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => handleDeleteAsset(asset.id)}
+                      onClick={() => handleDeleteAsset(asset._id)}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
@@ -268,34 +242,33 @@ function PemeliharaanAset() {
             <CardInput title="Identitas Aset">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="namaAset" className="block font-medium">
+                  <label htmlFor="rencana_id" className="block font-medium">
                     Nama Aset *
                   </label>
-                  <select
-                    id="namaAset"
-                    name="namaAset"
-                    value={editFormData.namaAset}
+                  <input
+                    type="text"
+                    id="rencana_id"
+                    name="rencana_id"
+                    value={editFormData.rencana_id}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option>Pilih Aset yang akan melakukan pemeliharaan</option>
-                    {/* Tambahkan opsi dinamis dari backend atau nilai statis */}
-                  </select>
+                    disabled
+                  />
                 </div>
                 <div>
-                  <label htmlFor="kondisiAset" className="block font-medium">
-                    Kondisi Aset *
+                  <label htmlFor="kondisi_stlh_perbaikan" className="block font-medium">
+                    Kondisi Setelah Perbaikan *
                   </label>
                   <select
-                    id="kondisiAset"
-                    name="kondisiAset"
-                    value={editFormData.kondisiAset}
+                    id="kondisi_stlh_perbaikan"
+                    name="kondisi_stlh_perbaikan"
+                    value={editFormData.kondisi_stlh_perbaikan}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
-                    <option>Pilih jenis kondisi aset</option>
-                    <option value="Baik">Baik</option>
-                    <option value="Rusak">Rusak</option>
+                    <option value="">Pilih jenis kondisi aset</option>
+                    <option value="can be used">can be used</option>
+                    <option value="Tidak dapat digunakan">Tidak dapat digunakan</option>
                   </select>
                 </div>
               </div>
@@ -304,204 +277,79 @@ function PemeliharaanAset() {
             <CardInput title="Detail Aset" className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="usiaAsetSaatIni" className="block font-medium">
-                    Usia Aset Saat Ini *
+                  <label htmlFor="status_pemeliharaan" className="block font-medium">
+                    Status Pemeliharaan *
                   </label>
-                  <input
-                    type="text"
-                    id="usiaAsetSaatIni"
-                    name="usiaAsetSaatIni"
-                    value={editFormData.usiaAsetSaatIni}
+                  <select
+                    id="status_pemeliharaan"
+                    name="status_pemeliharaan"
+                    value={editFormData.status_pemeliharaan}
                     onChange={handleInputChange}
-                    placeholder="Masukkan usia aset saat ini"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="maksimalUsiaAset" className="block font-medium">
-                    Maksimal Usia Aset *
-                  </label>
-                  <input
-                    type="text"
-                    id="maksimalUsiaAset"
-                    name="maksimalUsiaAset"
-                    value={editFormData.maksimalUsiaAset}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan maksimal usia aset"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="tahunProduksi" className="block font-medium">
-                    Tahun Produksi
-                  </label>
-                  <input
-                    type="text"
-                    id="tahunProduksi"
-                    name="tahunProduksi"
-                    value={editFormData.tahunProduksi}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan tahun produksi"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="deskripsiKerusakan" className="block font-medium">
-                    Deskripsi Kerusakan
-                  </label>
-                  <input
-                    type="text"
-                    id="deskripsiKerusakan"
-                    name="deskripsiKerusakan"
-                    value={editFormData.deskripsiKerusakan}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan Deskripsi Kerusakan"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="tanggalPemeliharaanAset"
-                    className="block font-medium"
                   >
-                    Tgl Pemeliharaan Aset *
+                    <option value="">Pilih status pemeliharaan</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Perbaikan berhasil">Perbaikan berhasil</option>
+                    <option value="Perbaikan gagal">Perbaikan gagal</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="penanggung_jawab" className="block font-medium">
+                    Penanggung Jawab *
+                  </label>
+                  <input
+                    type="text"
+                    id="penanggung_jawab"
+                    name="penanggung_jawab"
+                    value={editFormData.penanggung_jawab}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan nama penanggung jawab"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="deskripsi" className="block font-medium">
+                    Deskripsi
+                  </label>
+                  <input
+                    type="text"
+                    id="deskripsi"
+                    name="deskripsi"
+                    value={editFormData.deskripsi}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan deskripsi"
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tgl_dilakukan" className="block font-medium">
+                    Tanggal Dilakukan *
                   </label>
                   <DatePicker
-                    selected={editFormData.tanggalPemeliharaanAset}
-                    onChange={(date) => handleDateChange(date, "tanggalPemeliharaanAset")}
+                    selected={editFormData.tgl_dilakukan}
+                    onChange={(date) => handleDateChange(date, "tgl_dilakukan")}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     wrapperClassName="date-picker"
                     dateFormat="MMMM d, yyyy"
                   />
                 </div>
                 <div>
-                  <label htmlFor="statusPemeliharaan" className="block font-medium">
-                    Status Pemeliharaan
-                  </label>
-                  <select
-                    id="statusPemeliharaan"
-                    name="statusPemeliharaan"
-                    value={editFormData.statusPemeliharaan}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option>Pilih status pemeliharaan</option>
-                    <option value="Direncanakan">Direncanakan</option>
-                    <option value="Dilaksanakan">Dilaksanakan</option>
-                    <option value="Selesai">Selesai</option>
-                  </select>
-                </div>
-              </div>
-            </CardInput>
-
-            <CardInput title="Informasi Vendor" className="mt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="vendorPengelola" className="block font-medium">
-                    Vendor Pengelola *
-                  </label>
-                  <select
-                    id="vendorPengelola"
-                    name="vendorPengelola"
-                    value={editFormData.vendorPengelola}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option>Pilih vendor</option>
-                    <option value="Vendor1">Vendor 1</option>
-                    <option value="Vendor2">Vendor 2</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="infoVendor" className="block font-medium">
-                    Informasi vendor / no telepon
-                  </label>
-                  <input
-                    type="text"
-                    id="infoVendor"
-                    name="infoVendor"
-                    value={editFormData.infoVendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan informasi vendor"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-              </div>
-            </CardInput>
-
-            <CardInput title="Informasi Pemeliharaan" className="mt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="namaPenanggungJawab"
-                    className="block font-medium"
-                  >
-                    Nama Penanggung Jawab
-                  </label>
-                  <input
-                    type="text"
-                    id="namaPenanggungJawab"
-                    name="namaPenanggungJawab"
-                    value={editFormData.namaPenanggungJawab}
-                    onChange={handleInputChange}
-                    placeholder="Nama penanggung jawab"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="deskripsiPemeliharaan"
-                    className="block font-medium"
-                  >
-                    Deskripsi Pemeliharaan
-                  </label>
-                  <input
-                    type="text"
-                    id="deskripsiPemeliharaan"
-                    name="deskripsiPemeliharaan"
-                    value={editFormData.deskripsiPemeliharaan}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan deskripsi pemeliharaan"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="tanggalPemeliharaan"
-                    className="block font-medium"
-                  >
-                    Tanggal Pemeliharaan Dilakukan
+                  <label htmlFor="waktu_pemeliharaan" className="block font-medium">
+                    Waktu Pemeliharaan *
                   </label>
                   <DatePicker
-                    selected={editFormData.tanggalPemeliharaan}
-                    onChange={(date) => handleDateChange(date, "tanggalPemeliharaan")}
+                    selected={editFormData.waktu_pemeliharaan}
+                    onChange={(date) => handleDateChange(date, "waktu_pemeliharaan")}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                    dateFormat="MMMM d, yyyy"
                     wrapperClassName="date-picker"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="perkiraanWaktuPemeliharaan"
-                    className="block font-medium"
-                  >
-                    Perkiraan Waktu Pemeliharaan
-                  </label>
-                  <input
-                    type="text"
-                    id="perkiraanWaktuPemeliharaan"
-                    name="perkiraanWaktuPemeliharaan"
-                    value={editFormData.perkiraanWaktuPemeliharaan}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan perkiraan waktu pemeliharaan"
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
                   />
                 </div>
               </div>
             </CardInput>
 
             <div className="flex justify-end mt-4">
-              <Button label="Simpan" onClick={() => {}} />
+              <Button label="Simpan" type="submit" />
             </div>
           </form>
         </div>

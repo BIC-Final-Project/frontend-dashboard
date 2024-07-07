@@ -3,17 +3,24 @@ import axios from "axios";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
-import CardInput from "../../components/Cards/CardInput"; // Pastikan Anda mengimpor komponen CardInput
+import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
+import BASE_URL_API from "../../config";
+import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
 
+const API_URL = `${BASE_URL_API}api/v1/manage-aset/rencana`;
+const ASET_API_URL = `${BASE_URL_API}api/v1/manage-aset/aset`;
+const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
+const ITEMS_PER_PAGE = 10;
 
 function DesignAset() {
   const [assets, setAssets] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [modal, setModal] = useState({
@@ -24,7 +31,7 @@ function DesignAset() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    namaAset: "",
+    nama_aset: "",
     kondisiAset: "",
     usiaAsetSaatIni: "",
     maksimalUsiaAset: "",
@@ -39,22 +46,29 @@ function DesignAset() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetchAssets(currentPage, searchQuery);
-  }, [currentPage, searchQuery]);
+    fetchVendors();
+    fetchAssets();
+  }, []);
 
-  const fetchAssets = async (page, query) => {
+  const fetchVendors = async () => {
     try {
-      const pageSize = 10;
-      const response = await axios.get(
-        `URL_API?page=${page}&pageSize=${pageSize}&search=${query}`
-      );
-      const result = response.data;
-      if (result.code === 0) {
-        setAssets(result.data);
-        setTotalPages(Math.ceil(result.totalCount / pageSize));
-      } else {
-        throw new Error("API error: " + result.info);
-      }
+      const response = await fetchData(VENDOR_API_URL);
+      setVendors(response.data);
+    } catch (error) {
+      console.error("Fetching vendors error:", error.message);
+    }
+  };
+
+  const fetchAssets = async () => {
+    try {
+      const response = await fetchData(API_URL);
+      const result = response.data.map((item) => ({
+        ...item,
+        nama_vendor: item.vendor?.nama_vendor,
+        nama_aset: item.aset?.nama_aset,
+      }));
+      setAssets(result.reverse());
+      setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
       loadDummyData();
@@ -64,22 +78,22 @@ function DesignAset() {
   const loadDummyData = () => {
     const dummyAssets = [
       {
-        id: 1,
-        name: "Laptop HP",
-        dateEntered: "2023-05-01",
-        vendorName: "HP Inc.",
-        condition: "Baik",
-        age: 2,
-        status: "Aktif",
+        _id: 1,
+        nama_aset: "Laptop HP",
+        tgl_perencanaan: "2023-05-01",
+        vendor_id: "1",
+        kondisi_aset: "Baik",
+        usia_aset: "2 Bulan",
+        status_aset: "Aktif",
       },
       {
-        id: 2,
-        name: "Printer Epson",
-        dateEntered: "2023-04-15",
-        vendorName: "Epson",
-        condition: "Perlu Perbaikan",
-        age: 4,
-        status: "Non-Aktif",
+        _id: 2,
+        nama_aset: "Printer Epson",
+        tgl_perencanaan: "2023-04-15",
+        vendor_id: "2",
+        kondisi_aset: "Perlu Perbaikan",
+        usia_aset: "4 Bulan",
+        status_aset: "Non-Aktif",
       },
     ];
     setAssets(dummyAssets);
@@ -97,16 +111,17 @@ function DesignAset() {
 
   const handleEditAsset = (asset) => {
     setEditFormData({
-      namaAset: asset.name,
-      kondisiAset: asset.condition,
-      usiaAsetSaatIni: asset.age,
-      maksimalUsiaAset: "", // Sesuaikan dengan data yang ada
-      tahunProduksi: "", // Sesuaikan dengan data yang ada
-      deskripsiKerusakan: "", // Sesuaikan dengan data yang ada
-      tanggalRencanaPemeliharaan: new Date(asset.dateEntered),
-      statusPerencanaan: asset.status,
-      vendorPengelola: asset.vendorName,
-      infoVendor: "", // Sesuaikan dengan data yang ada
+      _id: asset._id,
+      namaAset: asset.nama_aset,
+      kondisiAset: asset.kondisi_aset,
+      usiaAsetSaatIni: asset.usia_aset,
+      maksimalUsiaAset: asset.maks_usia_aset,
+      tahunProduksi: "",
+      deskripsiKerusakan: asset.deskripsi,
+      tanggalRencanaPemeliharaan: new Date(asset.tgl_perencanaan),
+      statusPerencanaan: asset.status_aset,
+      vendorPengelola: asset.vendor_id,
+      infoVendor: asset.vendor?.telp_vendor,
     });
     setIsEditModalOpen(true);
   };
@@ -121,9 +136,11 @@ function DesignAset() {
 
   const confirmDelete = async () => {
     try {
-      const response = await axios.post("URL_DELETE_ASSET", { id: modal.id });
-      if (response.status === 200) {
-        setAssets(assets.filter((asset) => asset.id !== modal.id));
+      const response = await deleteData(`${API_URL}/${modal.id}`);
+      if (response) {
+        setAssets((prevAssets) =>
+          prevAssets.filter((asset) => asset._id !== modal.id)
+        );
         enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
@@ -143,10 +160,25 @@ function DesignAset() {
     setEditFormData({ ...editFormData, [name]: date });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Tambahkan logika untuk menyimpan data aset yang diubah
-    closeEditModal();
+    try {
+      const response = await updateData(
+        `${API_URL}/${editFormData._id}`,
+        editFormData
+      );
+      const updatedAsset = response.data;
+
+      setAssets((prevAssets) => [
+        updatedAsset,
+        ...prevAssets.filter((asset) => asset._id !== updatedAsset._id),
+      ]);
+
+      enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
+      closeEditModal();
+    } catch (error) {
+      enqueueSnackbar("Gagal memperbarui aset.", { variant: "error" });
+    }
   };
 
   const goToNextPage = () => {
@@ -164,6 +196,20 @@ function DesignAset() {
       setCurrentPage(currentPage - 1);
     }
   };
+
+  const filteredAssets = assets.filter(
+    (asset) =>
+      asset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.kondisi_aset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.usia_aset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.status_aset.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.nama_vendor.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <>
@@ -191,18 +237,18 @@ function DesignAset() {
               </tr>
             </thead>
             <tbody>
-              {assets.map((asset) => (
-                <tr key={asset.id}>
-                  <td>{asset.name}</td>
-                  <td>{moment(asset.dateEntered).format("DD MMM YYYY")}</td>
-                  <td>{asset.vendorName}</td>
-                  <td>{asset.condition}</td>
-                  <td>{asset.age}</td>
-                  <td>{asset.status}</td>
+              {paginatedAssets.map((asset) => (
+                <tr key={asset._id}>
+                  <td>{asset.nama_aset}</td>
+                  <td>{moment(asset.tgl_perencanaan).format("DD MMM YYYY")}</td>
+                  <td>{asset.nama_vendor}</td>
+                  <td>{asset.kondisi_aset}</td>
+                  <td>{asset.usia_aset}</td>
+                  <td>{asset.status_aset}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => handleDeleteAsset(asset.id)}
+                      onClick={() => handleDeleteAsset(asset._id)}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
@@ -255,7 +301,6 @@ function DesignAset() {
           onClick={(e) => e.stopPropagation()}
         >
           <form onSubmit={handleSubmit}>
-            {/* Bagian Identitas Aset */}
             <CardInput title="Identitas Aset">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -270,8 +315,11 @@ function DesignAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
                     <option>Pilih Aset Rencana pemeliharaan</option>
-                    <option value="Aset1">Aset 1</option>
-                    <option value="Aset2">Aset 2</option>
+                    {assets.map((asset) => (
+                      <option key={asset._id} value={asset._id}>
+                        {asset.nama_aset}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -293,11 +341,13 @@ function DesignAset() {
               </div>
             </CardInput>
 
-            {/* Bagian Detail Aset */}
             <CardInput title="Detail Aset" className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="usiaAsetSaatIni" className="block font-medium">
+                  <label
+                    htmlFor="usiaAsetSaatIni"
+                    className="block font-medium"
+                  >
                     Usia Aset Saat Ini *
                   </label>
                   <input
@@ -311,7 +361,10 @@ function DesignAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="maksimalUsiaAset" className="block font-medium">
+                  <label
+                    htmlFor="maksimalUsiaAset"
+                    className="block font-medium"
+                  >
                     Maksimal Usia Aset *
                   </label>
                   <input
@@ -339,7 +392,10 @@ function DesignAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="deskripsiKerusakan" className="block font-medium">
+                  <label
+                    htmlFor="deskripsiKerusakan"
+                    className="block font-medium"
+                  >
                     Deskripsi Kerusakan
                   </label>
                   <input
@@ -353,19 +409,27 @@ function DesignAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="tanggalRencanaPemeliharaan" className="block font-medium">
+                  <label
+                    htmlFor="tanggalRencanaPemeliharaan"
+                    className="block font-medium"
+                  >
                     Tanggal Rencana Pemeliharaan *
                   </label>
                   <DatePicker
                     selected={editFormData.tanggalRencanaPemeliharaan}
-                    onChange={(date) => handleDateChange('tanggalRencanaPemeliharaan', date)}
+                    onChange={(date) =>
+                      handleDateChange("tanggalRencanaPemeliharaan", date)
+                    }
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     dateFormat="MMMM d, yyyy"
                     wrapperClassName="date-picker"
                   />
                 </div>
                 <div>
-                  <label htmlFor="statusPerencanaan" className="block font-medium">
+                  <label
+                    htmlFor="statusPerencanaan"
+                    className="block font-medium"
+                  >
                     Status Perencanaan *
                   </label>
                   <select
@@ -376,19 +440,21 @@ function DesignAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
                     <option>Pilih status perencanaan</option>
-                    <option value="direncanakan">Direncanakan</option>
-                    <option value="dilaksanakan">Dilaksanakan</option>
-                    <option value="selesai">Selesai</option>
+                    <option value="Disetujui">Disetujui</option>
+                    <option value="Dalam Proses">Dalam Proses</option>
+                    <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
                   </select>
                 </div>
               </div>
             </CardInput>
 
-            {/* Bagian Informasi Vendor */}
             <CardInput title="Informasi Vendor" className="mt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="vendorPengelola" className="block font-medium">
+                  <label
+                    htmlFor="vendorPengelola"
+                    className="block font-medium"
+                  >
                     Vendor Pengelola *
                   </label>
                   <select
@@ -399,8 +465,11 @@ function DesignAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
                     <option>Pilih vendor</option>
-                    <option value="Vendor1">Vendor 1</option>
-                    <option value="Vendor2">Vendor 2</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor._id} value={vendor._id}>
+                        {vendor.nama_vendor}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -421,10 +490,7 @@ function DesignAset() {
             </CardInput>
 
             <div className="flex justify-end mt-4">
-            <Button
-            label="Simpan"
-            onClick={() => {}}
-          />
+              <Button label="Simpan" onClick={handleSubmit} />
             </div>
           </form>
         </div>

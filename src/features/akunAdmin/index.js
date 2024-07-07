@@ -14,6 +14,7 @@ const AdminForm = () => {
     emailId: "",
     phoneNumber: "",
     password: "",
+    role: "admin",
   };
 
   const [loading, setLoading] = useState(false);
