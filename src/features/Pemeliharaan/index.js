@@ -37,6 +37,7 @@ function PemeliharaanAset() {
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
 
   useEffect(() => {
     fetchAssets();
@@ -45,9 +46,18 @@ function PemeliharaanAset() {
   const fetchAssets = async () => {
     try {
       const response = await fetchData(API_URL);
-      const result = response.data;
-      setAssets(result.reverse());
-      setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
+      const dataDarurat = response.data_darurat.map((item) => ({
+        ...item,
+        status: "Data Darurat",
+      }));
+      const dataPemeliharaan = response.data_pemeliharaan.map((item) => ({
+        ...item,
+        status: "Data Pemeliharaan",
+      }));
+      const allAssets = [...dataDarurat, ...dataPemeliharaan];
+      allAssets.sort((a, b) => new Date(b.tgl_dilakukan) - new Date(a.tgl_dilakukan));
+      setAssets(allAssets);
+      setTotalPages(Math.ceil(allAssets.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
     }
@@ -69,8 +79,8 @@ function PemeliharaanAset() {
       status_pemeliharaan: asset.status_pemeliharaan,
       penanggung_jawab: asset.penanggung_jawab,
       deskripsi: asset.deskripsi,
-      tgl_dilakukan: new Date(asset.tgl_dilakukan),
-      waktu_pemeliharaan: new Date(asset.waktu_pemeliharaan),
+      tgl_dilakukan: moment(asset.tgl_dilakukan, "DD-MM-YYYY").toDate(),
+      waktu_pemeliharaan: moment(asset.waktu_pemeliharaan, "DD-MM-YYYY").toDate(),
     });
     setIsEditModalOpen(true);
   };
@@ -109,7 +119,9 @@ function PemeliharaanAset() {
       await updateData(`${API_URL}/${editFormData.rencana_id}`, {
         ...editFormData,
         tgl_dilakukan: moment(editFormData.tgl_dilakukan).format("DD-MM-YYYY"),
-        waktu_pemeliharaan: moment(editFormData.waktu_pemeliharaan).format("DD-MM-YYYY"),
+        waktu_pemeliharaan: moment(editFormData.waktu_pemeliharaan).format(
+          "DD-MM-YYYY"
+        ),
       });
       fetchAssets();
       enqueueSnackbar("Data berhasil diperbarui!", { variant: "success" });
@@ -135,13 +147,29 @@ function PemeliharaanAset() {
     setSearchQuery(event.target.value);
   };
 
+  const handleFilterChange = (event) => {
+    setFilterStatus(event.target.value);
+  };
+
   const filteredAssets = assets.filter(
     (asset) =>
-      asset.rencana_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.kondisi_stlh_perbaikan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.status_pemeliharaan.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.penanggung_jawab.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.deskripsi.toLowerCase().includes(searchQuery.toLowerCase())
+      (filterStatus === "All" || asset.status === filterStatus) &&
+      ((asset.rencana_id &&
+        asset.rencana_id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (asset.kondisi_stlh_perbaikan &&
+          asset.kondisi_stlh_perbaikan
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (asset.status_pemeliharaan &&
+          asset.status_pemeliharaan
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (asset.penanggung_jawab &&
+          asset.penanggung_jawab
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (asset.deskripsi &&
+          asset.deskripsi.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   const paginatedAssets = filteredAssets.slice(
@@ -152,7 +180,7 @@ function PemeliharaanAset() {
   return (
     <>
       <TitleCard title="Detail Pemeliharaan Aset" topMargin="mt-2">
-        <div className="mb-4">
+        <div className="mb-4 flex gap-2">
           <input
             type="text"
             placeholder="Cari aset..."
@@ -160,29 +188,40 @@ function PemeliharaanAset() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
+          <select
+            value={filterStatus}
+            onChange={handleFilterChange}
+            className="select select-bordered"
+          >
+            <option value="All">Semua Status</option>
+            <option value="Data Pemeliharaan">Data Pemeliharaan</option>
+            <option value="Data Darurat">Data Darurat</option>
+          </select>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
             <thead>
               <tr>
-                <th>Rencana ID</th>
-                <th>Tgl Dilakukan</th>
+                <th>Nama Aset</th>
+                <th>Tanggal Pemeliharaan</th>
+                <th>Vendor Pengelola</th>
                 <th>Penanggung Jawab</th>
-                <th>Kondisi Aset</th>
+                <th>Aset Setelah Perbaikan</th>
+                <th>Status Perbaikan</th>
                 <th>Status</th>
-                <th>Deskripsi</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {paginatedAssets.map((asset) => (
                 <tr key={asset._id}>
-                  <td>{asset.rencana_id}</td>
+                  <td>{asset.aset.nama_aset}</td>
                   <td>{moment(asset.tgl_dilakukan).format("DD MMM YYYY")}</td>
+                  <td>{asset.vendor.nama_vendor}</td>
                   <td>{asset.penanggung_jawab}</td>
                   <td>{asset.kondisi_stlh_perbaikan}</td>
                   <td>{asset.status_pemeliharaan}</td>
-                  <td>{asset.deskripsi}</td>
+                  <td>{asset.status}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
@@ -205,14 +244,14 @@ function PemeliharaanAset() {
         <div className="flex justify-between items-center mt-4">
           <div>
             <button
-              className="btn"
+              className="text-green-900 border border-green-900 hover:bg-green-100 px-4 py-2 rounded w-28"
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
             >
               Previous
             </button>
             <button
-              className="btn ml-5"
+              className="bg-green-900 text-white hover:bg-green-700 px-4 py-2 rounded ml-2 w-28"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
@@ -256,7 +295,10 @@ function PemeliharaanAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="kondisi_stlh_perbaikan" className="block font-medium">
+                  <label
+                    htmlFor="kondisi_stlh_perbaikan"
+                    className="block font-medium"
+                  >
                     Kondisi Setelah Perbaikan *
                   </label>
                   <select
@@ -268,7 +310,9 @@ function PemeliharaanAset() {
                   >
                     <option value="">Pilih jenis kondisi aset</option>
                     <option value="can be used">can be used</option>
-                    <option value="Tidak dapat digunakan">Tidak dapat digunakan</option>
+                    <option value="Tidak dapat digunakan">
+                      Tidak dapat digunakan
+                    </option>
                   </select>
                 </div>
               </div>
@@ -277,7 +321,10 @@ function PemeliharaanAset() {
             <CardInput title="Detail Aset" className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="status_pemeliharaan" className="block font-medium">
+                  <label
+                    htmlFor="status_pemeliharaan"
+                    className="block font-medium"
+                  >
                     Status Pemeliharaan *
                   </label>
                   <select
@@ -289,12 +336,17 @@ function PemeliharaanAset() {
                   >
                     <option value="">Pilih status pemeliharaan</option>
                     <option value="Accepted">Accepted</option>
-                    <option value="Perbaikan berhasil">Perbaikan berhasil</option>
+                    <option value="Perbaikan berhasil">
+                      Perbaikan berhasil
+                    </option>
                     <option value="Perbaikan gagal">Perbaikan gagal</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="penanggung_jawab" className="block font-medium">
+                  <label
+                    htmlFor="penanggung_jawab"
+                    className="block font-medium"
+                  >
                     Penanggung Jawab *
                   </label>
                   <input
@@ -334,12 +386,17 @@ function PemeliharaanAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="waktu_pemeliharaan" className="block font-medium">
+                  <label
+                    htmlFor="waktu_pemeliharaan"
+                    className="block font-medium"
+                  >
                     Waktu Pemeliharaan *
                   </label>
                   <DatePicker
                     selected={editFormData.waktu_pemeliharaan}
-                    onChange={(date) => handleDateChange(date, "waktu_pemeliharaan")}
+                    onChange={(date) =>
+                      handleDateChange(date, "waktu_pemeliharaan")
+                    }
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                     wrapperClassName="date-picker"
                     dateFormat="MMMM d, yyyy"

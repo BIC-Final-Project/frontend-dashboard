@@ -1,45 +1,49 @@
 import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
-import axios from "axios";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
-import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+import { fetchData, postData } from "../../utils/utils";
 
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
-const API_URL_ASET = `${BASE_URL_API}api/v1/manage-aset/aset`;
+const API_URL_RENCANA = `${BASE_URL_API}api/v1/manage-aset/rencana`;
 const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
+    rencana_id: "",
     namaAset: "",
-    kondisiAset: "",
+    kondisi_stlh_perbaikan: "",
     usiaAsetSaatIni: "",
     maksimalUsiaAset: "",
     tahunProduksi: "",
     tanggalPemeliharaanAset: new Date(),
     deskripsiKerusakan: "",
-    statusPemeliharaan: "",
+    status_pemeliharaan: "",
     vendorPengelola: "",
     infoVendor: "",
-    namaPenanggungJawab: "",
-    deskripsiPemeliharaan: "",
-    tanggalPemeliharaan: new Date(),
-    perkiraanWaktuPemeliharaan: "",
+    penanggung_jawab: "",
+    deskripsi: "",
+    tgl_dilakukan: new Date(),
+    waktu_pemeliharaan: "",
+    kondisi_stlh_perbaikan: "",
   });
   const [asetList, setAsetList] = useState([]);
   const [vendorList, setVendorList] = useState([]);
+  const [selectedRencana, setSelectedRencana] = useState(null);
+
+  console.log(formData);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const asetResponse = await fetchData(API_URL_ASET);
+        const asetResponse = await fetchData(API_URL_RENCANA);
         setAsetList(asetResponse.data);
-        
+
         const vendorResponse = await fetchData(VENDOR_API_URL);
         setVendorList(vendorResponse.data);
       } catch (error) {
@@ -60,10 +64,38 @@ function TambahAset() {
     setFormData((prev) => ({ ...prev, [name]: date }));
   };
 
+  const handleRencanaChange = (event) => {
+    const selectedRencanaId = event.target.value;
+    const selectedRencana = asetList.find(
+      (aset) => aset._id === selectedRencanaId
+    );
+    if (selectedRencana) {
+      setSelectedRencana(selectedRencana);
+      setFormData({
+        rencana_id: selectedRencana._id,
+        namaAset: selectedRencana.aset.nama_aset,
+        kondisi_stlh_perbaikan: selectedRencana.kondisi_aset,
+        usiaAsetSaatIni: selectedRencana.usia_aset,
+        maksimalUsiaAset: selectedRencana.maks_usia_aset,
+        tahunProduksi: selectedRencana.aset.tahun_produksi,
+        tanggalPemeliharaanAset: new Date(selectedRencana.tgl_perencanaan),
+        deskripsiKerusakan: selectedRencana.deskripsi,
+        status_pemeliharaan: "",
+        vendorPengelola: selectedRencana.vendor._id,
+        infoVendor: selectedRencana.vendor.telp_vendor,
+        penanggung_jawab: "",
+        deskripsi: "",
+        tgl_dilakukan: new Date(),
+        waktu_pemeliharaan: "",
+        kondisi_stlh_perbaikan: "",
+      });
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await postData(API_URL, formData);
+      await postData(API_URL, formData);
       enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
     } catch (error) {
       console.error("Error posting data:", error);
@@ -74,7 +106,6 @@ function TambahAset() {
   return (
     <TitleCard title="Tambah Pemeliharaan Aset" topMargin="mt-2">
       <form onSubmit={handleSubmit}>
-        {/* Identitas Aset */}
         <CardInput title="Identitas Aset">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -84,38 +115,45 @@ function TambahAset() {
               <select
                 id="namaAset"
                 name="namaAset"
-                value={formData.namaAset}
-                onChange={handleInputChange}
+                value={formData.rencanaId}
+                onChange={handleRencanaChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
-                <option value="">Pilih Aset yang akan melakukan pemeliharaan</option>
-                {asetList.map((aset) => (
-                  <option key={aset._id} value={aset._id}>
-                    {aset.nama_aset}
-                  </option>
-                ))}
+                <option value="">Pilih rencana aset pemeliharaan</option>
+                {asetList &&
+                  asetList.length > 0 &&
+                  asetList.map((aset) => (
+                    <option key={aset._id} value={aset._id}>
+                      {aset.aset.nama_aset}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
-              <label htmlFor="kondisiAset" className="block font-medium">
-                Kondisi Aset *
+              <label
+                htmlFor="kondisiStlhPerbaikan"
+                className="block font-medium"
+              >
+                Kondisi Aset Setelah Perbaikan *
               </label>
               <select
-                id="kondisiAset"
-                name="kondisiAset"
-                value={formData.kondisiAset}
+                id="kondisi_stlh_perbaikan"
+                name="kondisi_stlh_perbaikan"
+                value={formData.kondisi_stlh_perbaikan}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih jenis kondisi aset</option>
-                <option value="Baik">Baik</option>
-                <option value="Rusak">Rusak</option>
+                <option value="Dapat digunakan">Dapat digunakan</option>
+                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                <option value="Tidak dapat diperbaiki">
+                  Tidak dapat diperbaiki
+                </option>
               </select>
             </div>
           </div>
         </CardInput>
 
-        {/* Detail Aset */}
         <CardInput title="Detail Aset">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -179,11 +217,13 @@ function TambahAset() {
                 htmlFor="tanggalPemeliharaanAset"
                 className="block font-medium"
               >
-                Tgl Pemeliharaan Aset *
+                Tanggal Rencana Pemeliharaan *
               </label>
               <DatePicker
                 selected={formData.tanggalPemeliharaanAset}
-                onChange={(date) => handleDateChange(date, "tanggalPemeliharaanAset")}
+                onChange={(date) =>
+                  handleDateChange(date, "tanggalPemeliharaanAset")
+                }
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 wrapperClassName="date-picker"
                 dateFormat="MMMM d, yyyy"
@@ -194,9 +234,9 @@ function TambahAset() {
                 Status Pemeliharaan
               </label>
               <select
-                id="statusPemeliharaan"
-                name="statusPemeliharaan"
-                value={formData.statusPemeliharaan}
+                id="status_pemeliharaan"
+                name="status_pemeliharaan"
+                value={formData.status_pemeliharaan}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
@@ -209,7 +249,6 @@ function TambahAset() {
           </div>
         </CardInput>
 
-        {/* Informasi Vendor */}
         <CardInput title="Informasi Vendor">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -224,11 +263,13 @@ function TambahAset() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih vendor</option>
-                {vendorList.map((vendor) => (
-                  <option key={vendor._id} value={vendor._id}>
-                    {vendor.nama_vendor}
-                  </option>
-                ))}
+                {vendorList &&
+                  vendorList.length > 0 &&
+                  vendorList.map((vendor) => (
+                    <option key={vendor._id} value={vendor._id}>
+                      {vendor.nama_vendor}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -248,58 +289,71 @@ function TambahAset() {
           </div>
         </CardInput>
 
-        {/* Informasi Pemeliharaan */}
         <CardInput title="Informasi Pemeliharaan">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="namaPenanggungJawab" className="block font-medium">
+              <label
+                htmlFor="namaPenanggungJawab"
+                className="block font-medium"
+              >
                 Nama Penanggung Jawab
               </label>
               <input
                 type="text"
-                id="namaPenanggungJawab"
-                name="namaPenanggungJawab"
-                value={formData.namaPenanggungJawab}
+                id="penanggung_jawab"
+                name="penanggung_jawab"
+                value={formData.penanggung_jawab}
                 onChange={handleInputChange}
                 placeholder="Nama penanggung jawab"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
             <div>
-              <label htmlFor="deskripsiPemeliharaan" className="block font-medium">
+              <label
+                htmlFor="deskripsiPemeliharaan"
+                className="block font-medium"
+              >
                 Deskripsi Pemeliharaan
               </label>
               <input
                 type="text"
-                id="deskripsiPemeliharaan"
-                name="deskripsiPemeliharaan"
-                value={formData.deskripsiPemeliharaan}
+                id="deskripsi"
+                name="deskripsi"
+                value={formData.deskripsi}
                 onChange={handleInputChange}
                 placeholder="Masukkan deskripsi pemeliharaan"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
             <div>
-              <label htmlFor="tanggalPemeliharaan" className="block font-medium">
+              <label
+                htmlFor="tgl_dilakukan"
+                className="block font-medium"
+              >
                 Tanggal Pemeliharaan Dilakukan
               </label>
               <DatePicker
-                selected={formData.tanggalPemeliharaan}
-                onChange={(date) => handleDateChange(date, "tanggalPemeliharaan")}
+                selected={formData.tgl_dilakukan}
+                onChange={(date) =>
+                  handleDateChange(date, "tgl_dilakukan")
+                }
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 dateFormat="MMMM d, yyyy"
                 wrapperClassName="date-picker"
               />
             </div>
             <div>
-              <label htmlFor="perkiraanWaktuPemeliharaan" className="block font-medium">
+              <label
+                htmlFor="perkiraanWaktuPemeliharaan"
+                className="block font-medium"
+              >
                 Perkiraan Waktu Pemeliharaan
               </label>
               <input
                 type="text"
-                id="perkiraanWaktuPemeliharaan"
-                name="perkiraanWaktuPemeliharaan"
-                value={formData.perkiraanWaktuPemeliharaan}
+                id="waktu_pemeliharaan"
+                name="waktu_pemeliharaan"
+                value={formData.waktu_pemeliharaan}
                 onChange={handleInputChange}
                 placeholder="Masukkan perkiraan waktu pemeliharaan"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"

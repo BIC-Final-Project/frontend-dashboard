@@ -343,7 +343,7 @@ function DetailAset() {
                 <th>Masa Garansi Berakhir</th>
                 <th>Nama Vendor</th>
                 <th>Kategori</th>
-                <th>Jumlah Aset</th>
+                <th className="text-center">Jumlah Aset</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -371,8 +371,8 @@ function DetailAset() {
                   </td>
                   <td>{getVendorName(asset.vendor_id)}</td>
                   <td>{asset.kategori_aset}</td>
-                  <td>{asset.jumlah_aset}</td>
-                  <td>
+                  <td className="text-center">{asset.jumlah_aset}</td>
+                  <td className="flex justify-around items-center">
                     <button
                       className="btn btn-square btn-ghost"
                       onClick={() => handleDeleteAsset(asset._id)}
@@ -394,14 +394,14 @@ function DetailAset() {
         <div className="flex justify-between items-center mt-4">
           <div>
             <button
-              className="btn"
+              className="text-green-900 border border-green-900 hover:bg-green-100 px-4 py-2 rounded w-28"
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
             >
               Previous
             </button>
             <button
-              className="btn ml-5"
+              className="bg-[#3A5913] text-white hover:bg-[#293F0D] px-4 py-2 rounded ml-2 w-28"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
@@ -499,7 +499,10 @@ function DetailAset() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="tahunProduksi" className="block font-medium">
+                    <label
+                      htmlFor="tahunProduksi"
+                      className="block font-medium"
+                    >
                       Tahun Produksi
                     </label>
                     <input
@@ -513,7 +516,10 @@ function DetailAset() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="deskripsiAset" className="block font-medium">
+                    <label
+                      htmlFor="deskripsiAset"
+                      className="block font-medium"
+                    >
                       Deskripsi Aset
                     </label>
                     <input
@@ -604,7 +610,10 @@ function DetailAset() {
                         onChange={handleFileChange}
                       />
                     </label>
-                    <span className="ml-2 text-sm text-gray-500" id="file-chosen">
+                    <span
+                      className="ml-2 text-sm text-gray-500"
+                      id="file-chosen"
+                    >
                       {imagePreview ? "File chosen" : "No File Chosen"}
                     </span>
                   </div>
