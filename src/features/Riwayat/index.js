@@ -36,8 +36,8 @@ function RiwayatAset() {
       );
       const result = response.data;
       if (result.code === 0) {
-        setAssets(result.data.assets);
-        setTotalPages(Math.ceil(result.data.totalCount / pageSize));
+        setAssets(result.data);
+        setTotalPages(Math.ceil(result.totalCount / pageSize));
       } else {
         throw new Error("API error: " + result.message);
       }
@@ -50,29 +50,47 @@ function RiwayatAset() {
   const loadDummyData = () => {
     setAssets([
       {
-        id: 1,
-        name: "Laptop HP",
-        maintenanceDate: "2023-05-01",
-        vendor: "HP Inc.",
-        responsiblePerson: "John Doe",
-        condition: "Good",
-        status: "Completed",
-      },
-      {
-        id: 2,
-        name: "Printer Epson",
-        maintenanceDate: "2023-04-15",
-        vendor: "Epson",
-        responsiblePerson: "Jane Doe",
-        condition: "Needs Repair",
-        status: "Pending",
+        _id: "668a2840c466772b9ecfe6a7",
+        rencana_id: "6686b50d6f17913d443032b8",
+        kondisi_stlh_perbaikan: "Tidak dapat diperbaiki",
+        status_pemeliharaan: "Perbaikan gagal",
+        penanggung_jawab: "Budi Gunawan",
+        deskripsi: "pemeliharaan gagal",
+        tgl_dilakukan: "16-04-2024",
+        waktu_pemeliharaan: "17-07-2024",
+        aset: {
+          _id: "66863ee3f537bbfcc8bec49e",
+          vendor_id: "6687b98fe7e4e8369bd28889",
+          nama_aset: "cbhj",
+          kategori_aset: "asetBaru",
+          merek_aset: "xfbgnh",
+          kode_produksi: "cvb",
+          tahun_produksi: "2435",
+          deskripsi_aset: "vxvn",
+          gambar_aset: {
+            image_key: "aset-bic/cly6vmcko000501g8cartmr2c.jpg",
+            image_url:
+              "https://d3lwcb2m2mg8wp.cloudfront.net/aset-bic/cly6vmcko000501g8cartmr2c.jpg",
+          },
+          jumlah_aset: "gfhj",
+          aset_masuk: "2024-07-04",
+          garansi_dimulai: "2024-07-04",
+          garansi_berakhir: "2024-07-04",
+        },
+        vendor: {
+          _id: "668652588fe7d11ae387ce34",
+          nama_vendor: "teman basket jaya",
+          telp_vendor: "0023213577",
+          alamat_vendor: "surya kencana 13",
+          jenis_vendor: "vendor basket",
+        },
       },
     ]);
     setTotalPages(1);
   };
 
   const handleViewDetail = (id) => {
-    const asset = assets.find((asset) => asset.id === id);
+    const asset = assets.find((asset) => asset._id === id);
     setSelectedAsset(asset);
     setIsModalOpen(true);
     enqueueSnackbar("Menampilkan detail aset.", { variant: "info" });
@@ -149,17 +167,17 @@ function RiwayatAset() {
             </thead>
             <tbody>
               {assets.map((asset) => (
-                <tr key={asset.id}>
-                  <td>{asset.name}</td>
-                  <td>{moment(asset.maintenanceDate).format("DD MMM YYYY")}</td>
-                  <td>{asset.vendor}</td>
-                  <td>{asset.responsiblePerson}</td>
-                  <td>{asset.condition}</td>
-                  <td>{asset.status}</td>
+                <tr key={asset._id}>
+                  <td>{asset.aset.nama_aset}</td>
+                  <td>{moment(asset.tgl_dilakukan).format("DD MMM YYYY")}</td>
+                  <td>{asset.vendor.nama_vendor}</td>
+                  <td>{asset.penanggung_jawab}</td>
+                  <td>{asset.kondisi_stlh_perbaikan}</td>
+                  <td>{asset.status_pemeliharaan}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
-                      onClick={() => handleViewDetail(asset.id)}
+                      onClick={() => handleViewDetail(asset._id)}
                     >
                       <EyeIcon className="w-5 h-5" />
                     </button>
@@ -172,18 +190,18 @@ function RiwayatAset() {
         <div className="flex justify-between items-center mt-4">
           <div>
             <button
-              className="btn"
+              className="text-green-900 border border-green-900 hover:bg-green-100 px-4 py-2 rounded w-28"
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
             >
-              Sebelumnya
+              Previous
             </button>
             <button
-              className="btn ml-5"
+              className="bg-[#3A5913] text-white hover:bg-[#293F0D] px-4 py-2 rounded ml-2 w-28"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
-              Selanjutnya
+              Next
             </button>
           </div>
           <div>
@@ -265,7 +283,7 @@ function RiwayatAset() {
                 <select
                   id="namaAset"
                   name="namaAset"
-                  value={selectedAsset?.name || ""}
+                  value={selectedAsset?.aset.nama_aset || ""}
                   onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
@@ -282,7 +300,7 @@ function RiwayatAset() {
                 <select
                   id="kondisiAset"
                   name="kondisiAset"
-                  value={selectedAsset?.condition || ""}
+                  value={selectedAsset?.kondisi_stlh_perbaikan || ""}
                   onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
@@ -305,7 +323,7 @@ function RiwayatAset() {
                   type="text"
                   id="usiaAsetSaatIni"
                   name="usiaAsetSaatIni"
-                  value={selectedAsset?.age || ""}
+                  value={selectedAsset?.aset.tahun_produksi || ""}
                   onChange={() => {}}
                   placeholder="Masukkan usia aset saat ini"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -320,7 +338,7 @@ function RiwayatAset() {
                   type="text"
                   id="maksimalUsiaAset"
                   name="maksimalUsiaAset"
-                  value={selectedAsset?.maxAge || ""}
+                  value={selectedAsset?.aset.garansi_berakhir || ""}
                   onChange={() => {}}
                   placeholder="Masukkan maksimal usia aset"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -335,7 +353,7 @@ function RiwayatAset() {
                   type="text"
                   id="tahunProduksi"
                   name="tahunProduksi"
-                  value={selectedAsset?.productionYear || ""}
+                  value={selectedAsset?.aset.tahun_produksi || ""}
                   onChange={() => {}}
                   placeholder="Masukkan tahun produksi"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -353,7 +371,7 @@ function RiwayatAset() {
                   type="text"
                   id="deskripsiKerusakan"
                   name="deskripsiKerusakan"
-                  value={selectedAsset?.damageDescription || ""}
+                  value={selectedAsset?.aset.deskripsi_aset || ""}
                   onChange={() => {}}
                   placeholder="Masukkan Deskripsi Kerusakan"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -368,7 +386,11 @@ function RiwayatAset() {
                   Tanggal Rencana Pemeliharaan *
                 </label>
                 <DatePicker
-                  selected={selectedAsset?.maintenanceDate || new Date()}
+                  selected={
+                    selectedAsset
+                      ? moment(selectedAsset.waktu_pemeliharaan).toDate()
+                      : new Date()
+                  }
                   onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   dateFormat="MMMM d, yyyy"
@@ -386,15 +408,14 @@ function RiwayatAset() {
                 <select
                   id="statusPerencanaan"
                   name="statusPerencanaan"
-                  value={selectedAsset?.status || ""}
+                  value={selectedAsset?.status_pemeliharaan || ""}
                   onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
                 >
                   <option>Pilih status perencanaan</option>
-                  <option value="direncanakan">Direncanakan</option>
-                  <option value="dilaksanakan">Dilaksanakan</option>
-                  <option value="selesai">Selesai</option>
+                  <option value="Perbaikan Berhasil">Perbaikan Berhasil</option>
+                  <option value="Perbaikan Gagal">Perbaikan Gagal</option>
                 </select>
               </div>
             </div>
@@ -409,7 +430,7 @@ function RiwayatAset() {
                 <select
                   id="vendorPengelola"
                   name="vendorPengelola"
-                  value={selectedAsset?.vendor || ""}
+                  value={selectedAsset?.vendor.nama_vendor || ""}
                   onChange={() => {}}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
@@ -427,7 +448,7 @@ function RiwayatAset() {
                   type="text"
                   id="infoVendor"
                   name="infoVendor"
-                  value={selectedAsset?.vendorInfo || ""}
+                  value={selectedAsset?.vendor.telp_vendor || ""}
                   onChange={() => {}}
                   placeholder="Masukkan informasi vendor"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"

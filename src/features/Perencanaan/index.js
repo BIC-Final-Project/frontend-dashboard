@@ -257,14 +257,14 @@ function DesignAset() {
         <div className="flex justify-between items-center mt-4">
           <div>
             <button
-              className="btn"
+              className="text-green-900 border border-green-900 hover:bg-green-100 px-4 py-2 rounded w-28"
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
             >
               Previous
             </button>
             <button
-              className="btn ml-5"
+              className="bg-[#3A5913] text-white hover:bg-[#293F0D] px-4 py-2 rounded ml-2 w-28"
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
             >
