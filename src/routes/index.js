@@ -1,5 +1,6 @@
 import { lazy } from "react";
 
+// Lazy loading components
 const Dashboard = lazy(() => import("../pages/protected/Dashboard"));
 const Welcome = lazy(() => import("../pages/protected/Welcome"));
 const Page404 = lazy(() => import("../pages/protected/404"));
@@ -42,19 +43,21 @@ const PemeliharaanTambahDanger = lazy(() =>
 
 const Riwayat = lazy(() => import("../pages/protected/Riwayat/DetailRiwayat"));
 
-// Import the new admin form component
 const TambahAdminForm = lazy(() =>
   import("../features/akunAdmin/components/TambahAdminForm")
+);
+const DetailAdmin = lazy(() =>
+  import("../features/akunAdmin/components/DetailAdmin")
 );
 
 const routes = [
   {
-    path: "/dashboard", // the url
-    component: Page404, // view rendered
+    path: "/dashboard",
+    component: Page404,
   },
   {
-    path: "/welcome", // the url
-    component: Page404, // view rendered
+    path: "/welcome",
+    component: Page404,
   },
   {
     path: "/leads",
@@ -149,8 +152,12 @@ const routes = [
     component: Blank,
   },
   {
-    path: "/admin/tambah", // the new admin form route
-    component: TambahAdminForm, // view rendered
+    path: "/admin/tambah",
+    component: TambahAdminForm,
+  },
+  {
+    path: "/admin/detail",
+    component: DetailAdmin,
   },
 ];
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard"; // Adjusted path
 import CardInput from "../../components/Cards/CardInput"; // Adjusted path
-import Button from "../../components/Button"; // Adjusted pathdjusted path
+import Button from "../../components/Button"; // Adjusted path
 import InputText from "../../components/Input/InputText"; // Adjusted path
 import BASE_URL_API from "../../config"; // Adjusted path
 import axios from "axios";
@@ -11,10 +11,10 @@ const AdminForm = () => {
   const { enqueueSnackbar } = useSnackbar();
   const INITIAL_ADMIN_OBJ = {
     name: "",
-    emailId: "",
+    email: "",
     phoneNumber: "",
     password: "",
-    role: "admin",
+    role: "", // Default value for role
   };
 
   const [loading, setLoading] = useState(false);
@@ -24,13 +24,12 @@ const AdminForm = () => {
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
-    let timer;
     if (errorMessage) {
-      timer = setTimeout(() => {
+      const timer = setTimeout(() => {
         setErrorMessage("");
-      }, 2000); // Clear error message after 3 seconds
+      }, 2000); // Clear error message after 2 seconds
+      return () => clearTimeout(timer);
     }
-    return () => clearTimeout(timer);
   }, [errorMessage]);
 
   const submitForm = async (e) => {
@@ -40,22 +39,24 @@ const AdminForm = () => {
 
     if (adminObj.name.trim() === "")
       return enqueueSnackbar("Name is required!", { variant: "error" });
-    if (adminObj.emailId.trim() === "")
+    if (adminObj.email.trim() === "")
       return enqueueSnackbar("Email is required!", { variant: "error" });
     if (adminObj.phoneNumber.trim() === "")
       return enqueueSnackbar("Phone number is required!", { variant: "error" });
     if (adminObj.password.trim() === "")
       return enqueueSnackbar("Password is required!", { variant: "error" });
+    if (adminObj.role.trim() === "")
+      return enqueueSnackbar("Role is required!", { variant: "error" });
 
     setLoading(true);
 
     try {
       const response = await axios.post(`${BASE_URL_API}api/v1/auth/register`, {
         nama_lengkap: adminObj.name,
-        email: adminObj.emailId,
         no_handphone: adminObj.phoneNumber,
+        email: adminObj.email,
         password: adminObj.password,
-        role: "admin",
+        role: adminObj.role,
       });
 
       const { message } = response.data;
@@ -72,9 +73,12 @@ const AdminForm = () => {
       setCurrentTime(currentTimeString);
     } catch (error) {
       setLoading(false);
-      setErrorMessage("Registration failed!");
-      enqueueSnackbar("Registration failed!", { variant: "error" });
-      console.error(error);
+      const errorMsg = error.response
+        ? error.response.data.message
+        : error.message;
+      setErrorMessage(errorMsg);
+      enqueueSnackbar(`Registration failed: ${errorMsg}`, { variant: "error" });
+      console.error(errorMsg);
     }
   };
 
@@ -99,18 +103,20 @@ const AdminForm = () => {
                 containerStyle=""
                 updateFormValue={updateFormValue}
                 placeholder="Masukkan nama admin"
+                required
               />
             </div>
             <div>
-              <label htmlFor="emailId" className="block font-medium">
+              <label htmlFor="email" className="block font-medium">
                 Email *
               </label>
               <InputText
-                defaultValue={adminObj.emailId}
-                updateType="emailId"
+                defaultValue={adminObj.email}
+                updateType="email"
                 containerStyle=""
                 updateFormValue={updateFormValue}
-                placeholder="Masukan email admin"
+                placeholder="Masukkan email admin"
+                required
               />
             </div>
             <div>
@@ -122,7 +128,8 @@ const AdminForm = () => {
                 updateType="phoneNumber"
                 containerStyle=""
                 updateFormValue={updateFormValue}
-                placeholder="Masukan nomor telepon admin"
+                placeholder="Masukkan nomor telepon admin"
+                required
               />
             </div>
             <div>
@@ -135,8 +142,32 @@ const AdminForm = () => {
                 updateType="password"
                 containerStyle=""
                 updateFormValue={updateFormValue}
-                placeholder="Masukan password"
+                placeholder="Masukkan password"
+                required
               />
+            </div>
+            <div>
+              <label htmlFor="role" className="block font-medium">
+                Role *
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={adminObj.role}
+                onChange={(e) =>
+                  updateFormValue({
+                    updateType: "role",
+                    value: e.target.value,
+                  })
+                }
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                required
+              >
+                <option value="">Pilih role yang akan ditambahkan</option>
+                <option value="admin aset">Admin Aset</option>
+                <option value="admin operasional">Admin Operasional</option>
+                <option value="super admin">Super Admin</option>
+              </select>
             </div>
           </div>
         </CardInput>

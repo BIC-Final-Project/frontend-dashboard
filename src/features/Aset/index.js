@@ -414,7 +414,9 @@ function DetailAset() {
                   </td>
                   <td>{getVendorName(asset.vendor_id)}</td>
                   <td className="whitespace-nowrap">{asset.kategori_aset}</td>
-                  <td className="whitespace-nowrap text-center">{asset.jumlah_aset}</td>
+                  <td className="whitespace-nowrap text-center">
+                    {asset.jumlah_aset}
+                  </td>
                   <td className="flex justify-around items-center">
                     <button
                       className="btn btn-square btn-ghost text-red-500"
@@ -429,7 +431,7 @@ function DetailAset() {
                       <PencilIcon className="w-5 h-5" />
                     </button>
                     <button
-                      className="btn btn-square btn-ghost text-blue-500"
+                      className="btn btn-square btn-ghost text-black"
                       onClick={() => handleViewAsset(asset)}
                     >
                       <EyeIcon className="w-5 h-5" />

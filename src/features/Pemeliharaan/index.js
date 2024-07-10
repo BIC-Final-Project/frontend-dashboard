@@ -33,6 +33,7 @@ function PemeliharaanAset() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
+    asset_id: "", // Added to track current asset ID
     rencana_id: "",
     kondisi_stlh_perbaikan: "",
     status_pemeliharaan: "",
@@ -63,7 +64,7 @@ function PemeliharaanAset() {
   useEffect(() => {
     fetchAssets();
     fetchRencanaData();
-  }, []);
+  }, [searchQuery, filterStatus]); // Add dependencies
 
   const fetchAssets = async () => {
     try {
@@ -89,8 +90,33 @@ function PemeliharaanAset() {
       allAssets.sort(
         (a, b) => new Date(b.tgl_dilakukan) - new Date(a.tgl_dilakukan)
       );
-      setAssets(allAssets);
-      setTotalPages(Math.ceil(allAssets.length / ITEMS_PER_PAGE));
+      const filteredAssets = allAssets.filter(
+        (asset) =>
+          (filterStatus === "All" || asset.status === filterStatus) &&
+          ((asset.rencana_id &&
+            asset.rencana_id
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())) ||
+            (asset.kondisi_stlh_perbaikan &&
+              asset.kondisi_stlh_perbaikan
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())) ||
+            (asset.status_pemeliharaan &&
+              asset.status_pemeliharaan
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())) ||
+            (asset.penanggung_jawab &&
+              asset.penanggung_jawab
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())) ||
+            (asset.deskripsi &&
+              asset.deskripsi
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())))
+      );
+
+      setAssets(filteredAssets);
+      setTotalPages(Math.ceil(filteredAssets.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Gagal memuat data aset.", { variant: "error" });
@@ -143,6 +169,7 @@ function PemeliharaanAset() {
       const rencanaData = await fetchRencanaById(data.rencana_id);
 
       setEditFormData({
+        asset_id: data._id, // Set asset ID for later use
         rencana_id: data.rencana_id || "",
         kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
         status_pemeliharaan: data.status_pemeliharaan || "",
@@ -173,7 +200,6 @@ function PemeliharaanAset() {
           ? moment(rencanaData.aset.garansi_berakhir).toDate()
           : new Date(),
         status, // simpan status data
-        asset_id: data._id, // add asset id to form data
       });
       if (viewOnly) {
         setIsViewModalOpen(true);
@@ -286,7 +312,7 @@ function PemeliharaanAset() {
     try {
       const token = localStorage.getItem("token"); // Ensure you have the token
       const response = await updateData(
-        `${API_URL}/${editFormData.asset_id}`, // Use asset_id from form data
+        `${API_URL}/${editFormData.asset_id}`, // Use asset ID for update
         payload,
         {
           headers: {

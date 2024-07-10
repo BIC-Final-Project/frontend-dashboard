@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
+import EyeIcon from "@heroicons/react/24/outline/EyeIcon";
 import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
 import DatePicker from "react-datepicker";
@@ -31,8 +32,10 @@ function DesignAset() {
     id: null,
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     nama_aset: "",
+    aset_id: "",
     kondisiAset: "",
     usiaAsetSaatIni: "",
     maksimalUsiaAset: "",
@@ -43,13 +46,29 @@ function DesignAset() {
     vendorPengelola: "",
     infoVendor: "",
   });
+  const [viewFormData, setViewFormData] = useState({
+    nama_aset: "",
+    kondisiAset: "",
+    usiaAsetSaatIni: "",
+    maksimalUsiaAset: "",
+    tahun_produksi: "",
+    deskripsiKerusakan: "",
+    tanggalRencanaPemeliharaan: "",
+    statusPerencanaan: "",
+    vendorPengelola: "",
+    infoVendor: "",
+  });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchVendors();
-    fetchAssets();
     fetchAllAssets();
+    fetchAssets();
+  }, []);
+
+  useEffect(() => {
+    applySearch();
   }, [searchQuery]);
 
   const fetchVendors = async () => {
@@ -63,8 +82,15 @@ function DesignAset() {
 
   const fetchAllAssets = async () => {
     try {
-      const response = await fetchData(ASET_API_URL);
-      setAllAssets(response.data);
+      const response = await fetchData(API_URL);
+      const result = response.data.map((item) => ({
+        ...item,
+        nama_aset: item.aset.nama_aset,
+        aset_id: item.aset._id,
+        nama_vendor: item.vendor.nama_vendor,
+        tahun_produksi: item.aset.tahun_produksi,
+      }));
+      setAllAssets(result.reverse());
     } catch (error) {
       console.error("Fetching all assets error:", error.message);
     }
@@ -73,19 +99,13 @@ function DesignAset() {
   const fetchAssets = async () => {
     try {
       const response = await fetchData(API_URL);
-      const result = await Promise.all(
-        response.data.map(async (item) => {
-          const assetResponse = await fetchData(
-            `${ASET_API_URL}/${item.aset_id}`
-          );
-          return {
-            ...item,
-            nama_vendor: item.vendor?.nama_vendor,
-            nama_aset: assetResponse.data?.nama_aset,
-            tahun_produksi: assetResponse.data?.tahun_produksi,
-          };
-        })
-      );
+      const result = response.data.map((item) => ({
+        ...item,
+        nama_aset: item.aset.nama_aset,
+        aset_id: item.aset._id,
+        nama_vendor: item.vendor.nama_vendor,
+        tahun_produksi: item.aset.tahun_produksi,
+      }));
       setAssets(result.reverse());
       setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
     } catch (error) {
@@ -98,7 +118,7 @@ function DesignAset() {
     const dummyAssets = [
       {
         _id: 1,
-        name: "Laptop HP",
+        nama_aset: "Laptop HP",
         tgl_perencanaan: "2023-05-01",
         vendor_id: "1",
         kondisi_aset: "Baik",
@@ -107,7 +127,7 @@ function DesignAset() {
       },
       {
         _id: 2,
-        name: "Printer Epson",
+        nama_aset: "Printer Epson",
         tgl_perencanaan: "2023-04-15",
         vendor_id: "2",
         kondisi_aset: "Perlu Perbaikan",
@@ -117,6 +137,21 @@ function DesignAset() {
     ];
     setAssets(dummyAssets);
     setTotalPages(1);
+  };
+
+  const applySearch = () => {
+    if (searchQuery === "") {
+      setAssets(allAssets);
+      setTotalPages(Math.ceil(allAssets.length / ITEMS_PER_PAGE));
+      return;
+    }
+
+    const filteredAssets = allAssets.filter((asset) =>
+      asset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setAssets(filteredAssets);
+    setTotalPages(Math.ceil(filteredAssets.length / ITEMS_PER_PAGE));
+    setCurrentPage(1);
   };
 
   const handleDeleteAsset = (id) => {
@@ -130,24 +165,40 @@ function DesignAset() {
 
   const handleEditAsset = async (asset) => {
     try {
-      const assetResponse = await fetchData(`${ASET_API_URL}/${asset.aset_id}`);
       setEditFormData({
         _id: asset._id,
-        nama_aset: asset.aset_id,
+        aset_id: asset.aset._id,
+        nama_aset: asset.aset.nama_aset,
         kondisiAset: asset.kondisi_aset,
         usiaAsetSaatIni: asset.usia_aset,
         maksimalUsiaAset: asset.maks_usia_aset,
-        tahun_produksi: assetResponse.data?.tahun_produksi || "",
+        tahun_produksi: asset.tahun_produksi,
         deskripsiKerusakan: asset.deskripsi,
         tanggalRencanaPemeliharaan: new Date(asset.tgl_perencanaan),
         statusPerencanaan: asset.status_aset,
-        vendorPengelola: assetResponse.data.vendor?._id || "",
-        infoVendor: assetResponse.data.vendor?.telp_vendor || "",
+        vendorPengelola: asset.vendor._id,
+        infoVendor: asset.vendor.telp_vendor,
       });
       setIsEditModalOpen(true);
     } catch (error) {
       console.error("Fetching asset error:", error.message);
     }
+  };
+
+  const handleViewAsset = (asset) => {
+    setViewFormData({
+      nama_aset: asset.aset.nama_aset,
+      kondisiAset: asset.kondisi_aset,
+      usiaAsetSaatIni: asset.usia_aset,
+      maksimalUsiaAset: asset.maks_usia_aset,
+      tahun_produksi: asset.tahun_produksi,
+      deskripsiKerusakan: asset.deskripsi,
+      tanggalRencanaPemeliharaan: asset.tgl_perencanaan,
+      statusPerencanaan: asset.status_aset,
+      vendorPengelola: asset.vendor.nama_vendor,
+      infoVendor: asset.vendor.telp_vendor,
+    });
+    setIsViewModalOpen(true);
   };
 
   const closeDialog = () => {
@@ -158,15 +209,15 @@ function DesignAset() {
     setIsEditModalOpen(false);
   };
 
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+  };
+
   const confirmDelete = async () => {
     try {
-      const response = await deleteData(`${API_URL}/${modal.id}`);
-      if (response) {
-        fetchAssets(); // Fetch updated data after deletion
-        enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
-      } else {
-        enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
-      }
+      await deleteData(`${API_URL}/${modal.id}`);
+      fetchAssets();
+      enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
     } catch (error) {
       enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
     }
@@ -177,15 +228,15 @@ function DesignAset() {
     const { name, value } = e.target;
     setEditFormData({ ...editFormData, [name]: value });
 
-    // Fetch vendor data when nama_aset is changed
-    if (name === "nama_aset" && value) {
+    if (name === "aset_id" && value) {
       try {
         const assetResponse = await fetchData(`${ASET_API_URL}/${value}`);
         setEditFormData((prevData) => ({
           ...prevData,
-          vendorPengelola: assetResponse.data.vendor?._id || "",
-          infoVendor: assetResponse.data.vendor?.telp_vendor || "",
-          tahun_produksi: assetResponse.data.tahun_produksi || "",
+          nama_aset: assetResponse.data.nama_aset,
+          vendorPengelola: assetResponse.data.vendor._id,
+          infoVendor: assetResponse.data.vendor.telp_vendor,
+          tahun_produksi: assetResponse.data.tahun_produksi,
         }));
       } catch (error) {
         console.error("Fetching asset error:", error.message);
@@ -201,7 +252,7 @@ function DesignAset() {
     e.preventDefault();
     try {
       const requestData = {
-        aset_id: editFormData.nama_aset,
+        aset_id: editFormData.aset_id,
         vendor_id: editFormData.vendorPengelola,
         kondisi_aset: editFormData.kondisiAset,
         tgl_perencanaan: editFormData.tanggalRencanaPemeliharaan
@@ -213,17 +264,13 @@ function DesignAset() {
         deskripsi: editFormData.deskripsiKerusakan,
       };
 
-      const response = await axios.put(
-        `${API_URL}/${editFormData._id}`,
-        requestData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await axios.put(`${API_URL}/${editFormData._id}`, requestData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      fetchAssets(); // Fetch updated data after submission
+      fetchAssets();
 
       enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
       closeEditModal();
@@ -290,16 +337,22 @@ function DesignAset() {
                   <td>{asset.status_aset}</td>
                   <td>
                     <button
-                      className="btn btn-square btn-ghost"
+                      className="btn btn-square btn-ghost text-red-500"
                       onClick={() => handleDeleteAsset(asset._id)}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>
                     <button
-                      className="btn btn-square btn-ghost"
+                      className="btn btn-square btn-ghost text-yellow-500"
                       onClick={() => handleEditAsset(asset)}
                     >
                       <PencilIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-square btn-ghost text-black"
+                      onClick={() => handleViewAsset(asset)}
+                    >
+                      <EyeIcon className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>
@@ -352,8 +405,8 @@ function DesignAset() {
                   </label>
                   <select
                     id="nama_aset"
-                    name="nama_aset"
-                    value={editFormData.nama_aset}
+                    name="aset_id"
+                    value={editFormData.aset_id}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
@@ -536,6 +589,178 @@ function DesignAset() {
               <Button label="Simpan" type="submit" />
             </div>
           </form>
+        </div>
+      </div>
+
+      <div
+        className={`modal ${isViewModalOpen ? "modal-open" : ""}`}
+        onClick={closeViewModal}
+      >
+        <div
+          className="modal-box relative max-w-4xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CardInput title="Detail Aset">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="view_nama_aset" className="block font-medium">
+                  Nama Aset
+                </label>
+                <input
+                  type="text"
+                  id="view_nama_aset"
+                  name="view_nama_aset"
+                  value={viewFormData.nama_aset}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="view_kondisiAset" className="block font-medium">
+                  Kondisi Aset
+                </label>
+                <input
+                  type="text"
+                  id="view_kondisiAset"
+                  name="view_kondisiAset"
+                  value={viewFormData.kondisiAset}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_usiaAsetSaatIni"
+                  className="block font-medium"
+                >
+                  Usia Aset Saat Ini
+                </label>
+                <input
+                  type="text"
+                  id="view_usiaAsetSaatIni"
+                  name="view_usiaAsetSaatIni"
+                  value={viewFormData.usiaAsetSaatIni}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_maksimalUsiaAset"
+                  className="block font-medium"
+                >
+                  Maksimal Usia Aset
+                </label>
+                <input
+                  type="text"
+                  id="view_maksimalUsiaAset"
+                  name="view_maksimalUsiaAset"
+                  value={viewFormData.maksimalUsiaAset}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_tahun_produksi"
+                  className="block font-medium"
+                >
+                  Tahun Produksi
+                </label>
+                <input
+                  type="text"
+                  id="view_tahun_produksi"
+                  name="view_tahun_produksi"
+                  value={viewFormData.tahun_produksi}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_deskripsiKerusakan"
+                  className="block font-medium"
+                >
+                  Deskripsi Perencanaan
+                </label>
+                <input
+                  type="text"
+                  id="view_deskripsiKerusakan"
+                  name="view_deskripsiKerusakan"
+                  value={viewFormData.deskripsiKerusakan}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_tanggalRencanaPemeliharaan"
+                  className="block font-medium"
+                >
+                  Tanggal Rencana Pemeliharaan
+                </label>
+                <input
+                  type="text"
+                  id="view_tanggalRencanaPemeliharaan"
+                  name="view_tanggalRencanaPemeliharaan"
+                  value={moment(viewFormData.tanggalRencanaPemeliharaan).format(
+                    "DD MMM YYYY"
+                  )}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_statusPerencanaan"
+                  className="block font-medium"
+                >
+                  Status Perencanaan
+                </label>
+                <input
+                  type="text"
+                  id="view_statusPerencanaan"
+                  name="view_statusPerencanaan"
+                  value={viewFormData.statusPerencanaan}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="view_vendorPengelola"
+                  className="block font-medium"
+                >
+                  Vendor Pengelola
+                </label>
+                <input
+                  type="text"
+                  id="view_vendorPengelola"
+                  name="view_vendorPengelola"
+                  value={viewFormData.vendorPengelola}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+              <div>
+                <label htmlFor="view_infoVendor" className="block font-medium">
+                  Informasi Vendor / No Telepon
+                </label>
+                <input
+                  type="text"
+                  id="view_infoVendor"
+                  name="view_infoVendor"
+                  value={viewFormData.infoVendor}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                />
+              </div>
+            </div>
+          </CardInput>
+
+          <div className="flex justify-end mt-4">
+            <Button label="Tutup" onClick={closeViewModal} />
+          </div>
         </div>
       </div>
     </>
