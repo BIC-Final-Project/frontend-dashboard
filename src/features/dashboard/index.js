@@ -17,28 +17,58 @@ import { useState } from "react";
 
 const statsData = [
   {
-    title: "Total customers",
-    value: "34.7k",
-    icon: <UserGroupIcon className="w-8 h-8" />,
-    description: "↗︎ 2300 (22%)",
+    title: "Total Transaksi",
+    value: "Rp. 100.000.000",
+    icon: <CreditCardIcon className="w-8 h-8" />,
+    description: "Gabungan Total Transaksi",
   },
   {
     title: "Total Booking",
-    value: "$34,545",
-    icon: <CreditCardIcon className="w-8 h-8" />,
-    description: "Current month",
+    value: "15",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="w-8 h-8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.25 4.5h11.25m-11.25 4.5h11.25M8.25 13.5h11.25M8.25 18h11.25M3 6h.007v.008H3V6zm0 9h.007v.008H3V15zm0 3h.007v.008H3V18z"
+        />
+      </svg>
+    ),
+    description: "Booking Fasilitas",
   },
   {
     title: "Total Fasilitas",
-    value: "450",
-    icon: <CircleStackIcon className="w-8 h-8" />,
-    description: "50 in hot leads",
+    value: "10",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="w-8 h-8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 8.25h2.25v2.25H3V8.25zm0 4.5h2.25v2.25H3v-2.25zM3 17.25h2.25v2.25H3v-2.25zM6.75 4.5h10.5v3H6.75v-3zm0 6.75h10.5v3H6.75v-3zm0 6.75h10.5v3H6.75v-3zm-3-13.5h16.5v1.5H3.75v-1.5zm0 6.75h16.5v1.5H3.75v-1.5zm0 6.75h16.5v1.5H3.75v-1.5z"
+        />
+      </svg>
+    ),
+    description: "Saat ini",
   },
   {
     title: "Total Member",
-    value: "5.6k",
+    value: "2,420",
     icon: <UsersIcon className="w-8 h-8" />,
-    description: "↙ 300 (18%)",
+    description: "Terdaftar",
   },
 ];
 

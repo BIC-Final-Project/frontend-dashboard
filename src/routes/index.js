@@ -53,7 +53,7 @@ const DetailAdmin = lazy(() =>
 const routes = [
   {
     path: "/dashboard",
-    component: Page404,
+    component: Dashboard,
   },
   {
     path: "/welcome",
