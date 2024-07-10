@@ -153,7 +153,7 @@ function TambahAset() {
                 >
                   <option value="">Pilih jenis kondisi aset</option>
                   <option value="Dapat digunakan">Dapat digunakan</option>
-                  <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                  <option value="Dalam perbaikan">Dalam Perbaikan</option>
                   <option value="Tidak dapat diperbaiki">
                     Tidak dapat diperbaiki
                   </option>
@@ -250,7 +250,7 @@ function TambahAset() {
                   htmlFor="statusPemeliharaan"
                   className="block font-medium"
                 >
-                  Status Pemeliharaan
+                  Status Pemeliharaan*
                 </label>
                 <select
                   id="status_pemeliharaan"
@@ -260,11 +260,11 @@ function TambahAset() {
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 >
                   <option value="">Pilih status pemeliharaan</option>
-                  <option value="Perbaikan Berhasil">Perbaikan Berhasil</option>
-                  <option value="Dalam Perbaikan ">Dalam Perbaikan </option>
-                  <option value="Tidak dapat diperbaiki">
-                    Tidak dapat diperbaiki
+                  <option value="Selesai">Selesai</option>
+                  <option value="Sedang berlangsung ">
+                    Sedang berlangsung
                   </option>
+                  <option value="Perbaikan gagal">Perbaikan gagal</option>
                 </select>
               </div>
             </div>

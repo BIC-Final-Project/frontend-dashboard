@@ -11,7 +11,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
-import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+import { fetchData, deleteData } from "../../utils/utils";
 
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/rencana`;
 const ASET_API_URL = `${BASE_URL_API}api/v1/manage-aset/aset`;
@@ -20,6 +20,7 @@ const ITEMS_PER_PAGE = 10;
 
 function DesignAset() {
   const [assets, setAssets] = useState([]);
+  const [allAssets, setAllAssets] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -35,7 +36,7 @@ function DesignAset() {
     kondisiAset: "",
     usiaAsetSaatIni: "",
     maksimalUsiaAset: "",
-    tahunProduksi: "",
+    tahun_produksi: "",
     deskripsiKerusakan: "",
     tanggalRencanaPemeliharaan: new Date(),
     statusPerencanaan: "",
@@ -48,6 +49,7 @@ function DesignAset() {
   useEffect(() => {
     fetchVendors();
     fetchAssets();
+    fetchAllAssets();
   }, [searchQuery]);
 
   const fetchVendors = async () => {
@@ -59,14 +61,31 @@ function DesignAset() {
     }
   };
 
+  const fetchAllAssets = async () => {
+    try {
+      const response = await fetchData(ASET_API_URL);
+      setAllAssets(response.data);
+    } catch (error) {
+      console.error("Fetching all assets error:", error.message);
+    }
+  };
+
   const fetchAssets = async () => {
     try {
       const response = await fetchData(API_URL);
-      const result = response.data.map((item) => ({
-        ...item,
-        nama_vendor: item.vendor?.nama_vendor,
-        nama_aset: item.aset?.nama_aset,
-      }));
+      const result = await Promise.all(
+        response.data.map(async (item) => {
+          const assetResponse = await fetchData(
+            `${ASET_API_URL}/${item.aset_id}`
+          );
+          return {
+            ...item,
+            nama_vendor: item.vendor?.nama_vendor,
+            nama_aset: assetResponse.data?.nama_aset,
+            tahun_produksi: assetResponse.data?.tahun_produksi,
+          };
+        })
+      );
       setAssets(result.reverse());
       setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
     } catch (error) {
@@ -109,20 +128,26 @@ function DesignAset() {
     });
   };
 
-  const handleEditAsset = (asset) => {
-    setEditFormData({
-      namaAset: asset.nama_aset,
-      kondisiAset: asset.kondisi_aset,
-      usiaAsetSaatIni: asset.usia_aset,
-      maksimalUsiaAset: asset.maks_usia_aset,
-      tahunProduksi: "",
-      deskripsiKerusakan: asset.deskripsi,
-      tanggalRencanaPemeliharaan: new Date(asset.tgl_perencanaan),
-      statusPerencanaan: asset.status_aset,
-      vendorPengelola: asset.vendor_id,
-      infoVendor: asset.vendor?.telp_vendor,
-    });
-    setIsEditModalOpen(true);
+  const handleEditAsset = async (asset) => {
+    try {
+      const assetResponse = await fetchData(`${ASET_API_URL}/${asset.aset_id}`);
+      setEditFormData({
+        _id: asset._id,
+        nama_aset: asset.aset_id,
+        kondisiAset: asset.kondisi_aset,
+        usiaAsetSaatIni: asset.usia_aset,
+        maksimalUsiaAset: asset.maks_usia_aset,
+        tahun_produksi: assetResponse.data?.tahun_produksi || "",
+        deskripsiKerusakan: asset.deskripsi,
+        tanggalRencanaPemeliharaan: new Date(asset.tgl_perencanaan),
+        statusPerencanaan: asset.status_aset,
+        vendorPengelola: assetResponse.data.vendor?._id || "",
+        infoVendor: assetResponse.data.vendor?.telp_vendor || "",
+      });
+      setIsEditModalOpen(true);
+    } catch (error) {
+      console.error("Fetching asset error:", error.message);
+    }
   };
 
   const closeDialog = () => {
@@ -137,9 +162,7 @@ function DesignAset() {
     try {
       const response = await deleteData(`${API_URL}/${modal.id}`);
       if (response) {
-        setAssets((prevAssets) =>
-          prevAssets.filter((asset) => asset._id !== modal.id)
-        );
+        fetchAssets(); // Fetch updated data after deletion
         enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus aset.", { variant: "error" });
@@ -150,9 +173,24 @@ function DesignAset() {
     closeDialog();
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setEditFormData({ ...editFormData, [name]: value });
+
+    // Fetch vendor data when nama_aset is changed
+    if (name === "nama_aset" && value) {
+      try {
+        const assetResponse = await fetchData(`${ASET_API_URL}/${value}`);
+        setEditFormData((prevData) => ({
+          ...prevData,
+          vendorPengelola: assetResponse.data.vendor?._id || "",
+          infoVendor: assetResponse.data.vendor?.telp_vendor || "",
+          tahun_produksi: assetResponse.data.tahun_produksi || "",
+        }));
+      } catch (error) {
+        console.error("Fetching asset error:", error.message);
+      }
+    }
   };
 
   const handleDateChange = (name, date) => {
@@ -162,20 +200,35 @@ function DesignAset() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await updateData(
-        `${API_URL}/${editFormData._id}`,
-        editFormData
-      );
-      const updatedAsset = response.data;
+      const requestData = {
+        aset_id: editFormData.nama_aset,
+        vendor_id: editFormData.vendorPengelola,
+        kondisi_aset: editFormData.kondisiAset,
+        tgl_perencanaan: editFormData.tanggalRencanaPemeliharaan
+          .toISOString()
+          .split("T")[0],
+        status_aset: editFormData.statusPerencanaan,
+        usia_aset: editFormData.usiaAsetSaatIni,
+        maks_usia_aset: editFormData.maksimalUsiaAset,
+        deskripsi: editFormData.deskripsiKerusakan,
+      };
 
-      setAssets((prevAssets) => [
-        updatedAsset,
-        ...prevAssets.filter((asset) => asset._id !== updatedAsset._id),
-      ]);
+      const response = await axios.put(
+        `${API_URL}/${editFormData._id}`,
+        requestData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      fetchAssets(); // Fetch updated data after submission
 
       enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
       closeEditModal();
     } catch (error) {
+      console.error("Error updating asset:", error);
       enqueueSnackbar("Gagal memperbarui aset.", { variant: "error" });
     }
   };
@@ -294,18 +347,18 @@ function DesignAset() {
             <CardInput title="Identitas Aset">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="namaAset" className="block font-medium">
+                  <label htmlFor="nama_aset" className="block font-medium">
                     Nama Aset *
                   </label>
                   <select
-                    id="namaAset"
-                    name="namaAset"
-                    value={editFormData.namaAset}
+                    id="nama_aset"
+                    name="nama_aset"
+                    value={editFormData.nama_aset}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   >
-                    <option>Pilih Aset Rencana pemeliharaan</option>
-                    {assets.map((asset) => (
+                    <option value="">Pilih Aset Rencana pemeliharaan</option>
+                    {allAssets.map((asset) => (
                       <option key={asset._id} value={asset._id}>
                         {asset.nama_aset}
                       </option>
@@ -368,14 +421,14 @@ function DesignAset() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="tahunProduksi" className="block font-medium">
+                  <label htmlFor="tahun_produksi" className="block font-medium">
                     Tahun Produksi
                   </label>
                   <input
                     type="text"
-                    id="tahunProduksi"
-                    name="tahunProduksi"
-                    value={editFormData.tahunProduksi}
+                    id="tahun_produksi"
+                    name="tahun_produksi"
+                    value={editFormData.tahun_produksi}
                     onChange={handleInputChange}
                     placeholder="Masukkan tahun produksi"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
@@ -386,7 +439,7 @@ function DesignAset() {
                     htmlFor="deskripsiKerusakan"
                     className="block font-medium"
                   >
-                    Deskripsi Kerusakan
+                    Deskripsi Perencanaan
                   </label>
                   <input
                     type="text"
@@ -394,7 +447,7 @@ function DesignAset() {
                     name="deskripsiKerusakan"
                     value={editFormData.deskripsiKerusakan}
                     onChange={handleInputChange}
-                    placeholder="Masukkan Deskripsi Kerusakan"
+                    placeholder="Masukkan Deskripsi Perencanaan"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
@@ -480,7 +533,7 @@ function DesignAset() {
             </CardInput>
 
             <div className="flex justify-end mt-4">
-              <Button label="Simpan" onClick={handleSubmit} />
+              <Button label="Simpan" type="submit" />
             </div>
           </form>
         </div>

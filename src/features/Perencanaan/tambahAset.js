@@ -103,7 +103,7 @@ function TambahAset() {
     event.preventDefault();
 
     const existingData = planningData.find(
-      (data) => data.AsetID === formData.namaAset
+      (data) => data.aset_id === formData.namaAset
     );
 
     if (existingData) {
@@ -114,15 +114,15 @@ function TambahAset() {
     }
 
     const requestData = {
-      AsetID: formData.namaAset,
-      VendorID: formData.vendorPengelola,
-      KondisiAset: formData.kondisiAset,
-      TglPerencanaan: formData.tanggalRencanaPemeliharaan
+      aset_id: formData.namaAset,
+      vendor_id: formData.vendorPengelola,
+      kondisi_aset: formData.kondisiAset,
+      tgl_perencanaan: formData.tanggalRencanaPemeliharaan
         ? formData.tanggalRencanaPemeliharaan.toISOString().split("T")[0]
         : null,
-      StatusAset: formData.statusPerencanaan,
-      UsiaAset: formData.usiaAsetSaatIni,
-      MaksUsiaAset: formData.maksimalUsiaAset,
+      status_aset: formData.statusPerencanaan,
+      usia_aset: formData.usiaAsetSaatIni,
+      maks_usia_aset: formData.maksimalUsiaAset,
       deskripsi: formData.deskripsiKerusakan,
     };
 
@@ -247,7 +247,7 @@ function TambahAset() {
             </div>
             <div>
               <label htmlFor="deskripsiKerusakan" className="block font-medium">
-                Deskripsi Kerusakan
+                Deskripsi Perencanaan
               </label>
               <input
                 type="text"
@@ -255,7 +255,7 @@ function TambahAset() {
                 name="deskripsiKerusakan"
                 value={formData.deskripsiKerusakan}
                 onChange={handleInputChange}
-                placeholder="Masukkan Deskripsi Kerusakan"
+                placeholder="Masukkan Deskripsi Perencanaan"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>

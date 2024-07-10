@@ -1,3 +1,3 @@
-const BASE_URL_API = "https://bic-final-project-be-0-2-3.onrender.com/";
+const BASE_URL_API = "https://fe9g5scajb.us-east-1.awsapprunner.com/";
 
 export default BASE_URL_API;

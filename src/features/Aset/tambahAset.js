@@ -183,8 +183,8 @@ function TambahAset() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih jenis kategori aset</option>
-                <option value="asetLama">Aset Lama</option>
-                <option value="asetBaru">Aset Baru</option>
+                <option value="Aset Lama">Aset Lama</option>
+                <option value="Aset Baru">Aset Baru</option>
               </select>
             </div>
           </div>

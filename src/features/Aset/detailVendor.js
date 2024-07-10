@@ -1,17 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
-import TrashIcon from "@heroicons/react/24/outline/TrashIcon";
-import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
-import PencilIcon from "@heroicons/react/24/outline/PencilIcon";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Button from "../../components/Button";
+import ConfirmDialog from "../../components/Dialog/ConfirmDialog";
 import DialogComponent from "../../components/Dialog/InformationDialog";
 import BASE_URL_API from "../../config";
 import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 function DetailVendor() {
+  const { enqueueSnackbar } = useSnackbar();
+  const tableRef = useRef();
   const [vendors, setVendors] = useState([]);
   const [allVendors, setAllVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,12 +27,12 @@ function DetailVendor() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
+    _id: "",
     nama_vendor: "",
     telp_vendor: "",
     alamat_vendor: "",
     jenis_vendor: "",
   });
-  const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -49,9 +51,8 @@ function DetailVendor() {
       if (response && response.data) {
         const vendorsWithIndex = response.data.map((vendor, index) => ({
           ...vendor,
-          index: index,
+          index,
         }));
-
         const sortedVendors = vendorsWithIndex.sort(
           (a, b) => b.index - a.index
         );
@@ -96,17 +97,11 @@ function DetailVendor() {
     setIsEditModalOpen(true);
   };
 
-  const closeDialog = () => {
-    setModal({ isOpen: false, id: null });
-  };
+  const closeDialog = () => setModal({ isOpen: false, id: null });
 
-  const closeEditModal = () => {
-    setIsEditModalOpen(false);
-  };
+  const closeEditModal = () => setIsEditModalOpen(false);
 
-  const closeDialogComponent = () => {
-    setIsDialogOpen(false);
-  };
+  const closeDialogComponent = () => setIsDialogOpen(false);
 
   const confirmDelete = async () => {
     try {
@@ -114,8 +109,11 @@ function DetailVendor() {
         `${BASE_URL_API}api/v1/manage-aset/vendor/${modal.id}`
       );
       if (response.status === 200) {
-        setVendors(vendors.filter((vendor) => vendor._id !== modal.id));
-        setAllVendors(allVendors.filter((vendor) => vendor._id !== modal.id));
+        const updatedVendors = vendors.filter(
+          (vendor) => vendor._id !== modal.id
+        );
+        setVendors(updatedVendors);
+        setAllVendors(updatedVendors);
         enqueueSnackbar("Vendor berhasil dihapus.", { variant: "success" });
       } else {
         enqueueSnackbar("Gagal menghapus vendor.", { variant: "error" });
@@ -152,6 +150,27 @@ function DetailVendor() {
     closeEditModal();
   };
 
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handlePrint = () => {
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [["Nama Vendor", "No Tlp Vendor", "Alamat", "Jenis Vendor"]],
+      body: allVendors.map((vendor) => [
+        vendor.nama_vendor,
+        vendor.telp_vendor,
+        vendor.alamat_vendor,
+        vendor.jenis_vendor,
+      ]),
+    });
+    doc.save("vendors.pdf");
+  };
+
+  const paginatedVendors = vendors.slice(
+    (currentPage - 1) * 10,
+    currentPage * 10
+  );
+
   const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -164,15 +183,6 @@ function DetailVendor() {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const paginatedVendors = vendors.slice(
-    (currentPage - 1) * 10,
-    currentPage * 10
-  );
-
   return (
     <>
       <TitleCard title="Detail Vendor" topMargin="mt-2">
@@ -184,6 +194,7 @@ function DetailVendor() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
+          <Button label="Cetak Data" onClick={handlePrint} className="ml-2" />
         </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
@@ -208,13 +219,13 @@ function DetailVendor() {
                       className="btn btn-square btn-ghost"
                       onClick={() => handleDeleteVendor(vendor._id)}
                     >
-                      <TrashIcon className="w-5 h-5" />
+                      <TrashIcon className="w-5 h-5 text-red-500" />
                     </button>
                     <button
                       className="btn btn-square btn-ghost"
                       onClick={() => handleEditVendor(vendor)}
                     >
-                      <PencilIcon className="w-5 h-5" />
+                      <PencilIcon className="w-5 h-5 text-yellow-500" />
                     </button>
                   </td>
                 </tr>
@@ -273,10 +284,10 @@ function DetailVendor() {
                       type="text"
                       id="nama_vendor"
                       name="nama_vendor"
+                      className="input input-bordered w-full"
                       value={editFormData.nama_vendor}
                       onChange={handleInputChange}
-                      placeholder="Masukkan Nama Vendor"
-                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      required
                     />
                   </div>
                   <div>
@@ -287,31 +298,27 @@ function DetailVendor() {
                       type="text"
                       id="telp_vendor"
                       name="telp_vendor"
+                      className="input input-bordered w-full"
                       value={editFormData.telp_vendor}
                       onChange={handleInputChange}
-                      placeholder="Masukkan No Tlp Vendor"
-                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      required
                     />
                   </div>
-                </div>
-              </CardInput>
-              <CardInput title="Detail Vendor">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label
                       htmlFor="alamat_vendor"
                       className="block font-medium"
                     >
-                      Alamat *
+                      Alamat Vendor *
                     </label>
                     <input
                       type="text"
                       id="alamat_vendor"
                       name="alamat_vendor"
+                      className="input input-bordered w-full"
                       value={editFormData.alamat_vendor}
                       onChange={handleInputChange}
-                      placeholder="Masukkan Alamat"
-                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      required
                     />
                   </div>
                   <div>
@@ -322,23 +329,27 @@ function DetailVendor() {
                       type="text"
                       id="jenis_vendor"
                       name="jenis_vendor"
+                      className="input input-bordered w-full"
                       value={editFormData.jenis_vendor}
                       onChange={handleInputChange}
-                      placeholder="Masukkan Jenis Vendor"
-                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      required
                     />
                   </div>
                 </div>
               </CardInput>
               <div className="flex justify-end mt-4">
-                <Button label="Simpan Vendor" onClick={handleSubmit} />
+                <Button type="submit" label="Simpan" />
               </div>
             </form>
           </div>
         </div>
       )}
-
-      <DialogComponent isOpen={isDialogOpen} onClose={closeDialogComponent} />
+      <DialogComponent
+        isOpen={isDialogOpen}
+        onClose={closeDialogComponent}
+        title="Information"
+        message="Proses sedang dilakukan. Harap tunggu sebentar."
+      />
     </>
   );
 }

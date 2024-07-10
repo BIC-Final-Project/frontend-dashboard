@@ -143,7 +143,7 @@ function TambahAsetDanger() {
               >
                 <option value="">Pilih jenis kondisi aset</option>
                 <option value="Dapat digunakan">Dapat digunakan</option>
-                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                <option value="Dalam perbaikan">Dalam Perbaikan</option>
                 <option value="Tidak dapat diperbaiki">
                   Tidak dapat diperbaiki
                 </option>
@@ -154,34 +154,6 @@ function TambahAsetDanger() {
 
         <CardInput title="Detail Aset">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="usiaAsetSaatIni" className="block font-medium">
-                Usia Aset Saat Ini *
-              </label>
-              <input
-                type="text"
-                id="usiaAsetSaatIni"
-                name="usiaAsetSaatIni"
-                value={formData.usiaAsetSaatIni}
-                onChange={handleInputChange}
-                placeholder="Masukkan usia aset saat ini"
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-              />
-            </div>
-            <div>
-              <label htmlFor="maksimalUsiaAset" className="block font-medium">
-                Maksimal Usia Aset *
-              </label>
-              <input
-                type="text"
-                id="maksimalUsiaAset"
-                name="maksimalUsiaAset"
-                value={formData.maksimalUsiaAset}
-                onChange={handleInputChange}
-                placeholder="Masukkan maksimal usia aset"
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-              />
-            </div>
             <div>
               <label htmlFor="tahunProduksi" className="block font-medium">
                 Tahun Produksi
@@ -229,7 +201,7 @@ function TambahAsetDanger() {
             </div>
             <div>
               <label htmlFor="statusPemeliharaan" className="block font-medium">
-                Status Pemeliharaan
+                Status Pemeliharaan*
               </label>
               <select
                 id="statusPemeliharaan"
@@ -239,9 +211,11 @@ function TambahAsetDanger() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih status pemeliharaan</option>
-                <option value="Direncanakan">Direncanakan</option>
-                <option value="Dilaksanakan">Dilaksanakan</option>
-                <option value="Selesai">Selesai</option>
+                <option value="Perbaikan berhasil">Perbaikan berhasil</option>
+                <option value="Dalam perbaikan">Dalam perbaikan</option>
+                <option value="Tidak dapat diperbaiki">
+                  Tidak dapat diperbaiki
+                </option>
               </select>
             </div>
           </div>
@@ -261,11 +235,12 @@ function TambahAsetDanger() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih vendor</option>
-                {Array.isArray(vendorList) && vendorList.map((vendor) => (
-                  <option key={vendor._id} value={vendor._id}>
-                    {vendor.nama_vendor}
-                  </option>
-                ))}
+                {Array.isArray(vendorList) &&
+                  vendorList.map((vendor) => (
+                    <option key={vendor._id} value={vendor._id}>
+                      {vendor.nama_vendor}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
