@@ -44,10 +44,10 @@ const PemeliharaanTambahDanger = lazy(() =>
 const Riwayat = lazy(() => import("../pages/protected/Riwayat/DetailRiwayat"));
 
 const TambahAdminForm = lazy(() =>
-  import("../features/akunAdmin/components/TambahAdminForm")
+  import("../pages/protected/Management/TambahAdminForm")
 );
 const DetailAdmin = lazy(() =>
-  import("../features/akunAdmin/components/DetailAdmin")
+  import("../pages/protected/Management/DetailAdmin")
 );
 
 const routes = [

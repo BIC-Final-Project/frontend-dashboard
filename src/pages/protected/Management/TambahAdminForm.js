@@ -1,14 +1,13 @@
-// src/features/akunAdmin/components/TambahAdminForm.js
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setPageTitle } from "../../../features/common/headerSlice";
-import AdminForm from "../index"; // Adjusted path to import from index.js
+import AdminForm from "../../../features/akunAdmin/TambahAdmin"; // Pastikan jalur ini benar
 
 function InternalPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(setPageTitle({ title: "Tambah Admin" }));
+    dispatch(setPageTitle({ title: "Detail Admin" }));
   }, [dispatch]);
 
   return <AdminForm />;
