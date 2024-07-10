@@ -7,8 +7,11 @@ import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FunnelIcon } from "@heroicons/react/24/outline"; // Use the correct icon
-import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+import { fetchData } from "../../utils/utils";
 import BASE_URL_API from "../../config";
+import Button from "../../components/Button";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const API_URL = `${BASE_URL_API}/api/v1/manage-aset/pelihara/riwayat`;
 const ITEMS_PER_PAGE = 10;
@@ -90,6 +93,31 @@ function RiwayatAset() {
     setIsFilterOpen(false);
   };
 
+  const handlePrint = () => {
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [
+        [
+          "Nama Aset",
+          "Tanggal Pemeliharaan",
+          "Vendor Pengelola",
+          "Penanggung Jawab",
+          "Kondisi Aset",
+          "Status",
+        ],
+      ],
+      body: assets.map((asset) => [
+        asset.aset.nama_aset,
+        moment(asset.tgl_dilakukan).format("DD MMM YYYY"),
+        asset.vendor.nama_vendor,
+        asset.penanggung_jawab,
+        asset.kondisi_stlh_perbaikan,
+        asset.status_pemeliharaan,
+      ]),
+    });
+    doc.save("riwayat_aset.pdf");
+  };
+
   return (
     <>
       <TitleCard title="Riwayat Pemeliharaan Aset" topMargin="mt-2">
@@ -101,13 +129,16 @@ function RiwayatAset() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
-          <button
-            className="btn btn-white flex items-center"
-            onClick={handleFilterClick}
-          >
-            <FunnelIcon className="w-5 h-5 mr-2" />
-            Tambahkan Filter
-          </button>
+          <div className="flex">
+            <Button label="Cetak Data" onClick={handlePrint} className="ml-2" />
+            <button
+              className="btn btn-white flex items-center ml-2"
+              onClick={handleFilterClick}
+            >
+              <FunnelIcon className="w-5 h-5 mr-2" />
+              Tambahkan Filter
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="table w-full">
