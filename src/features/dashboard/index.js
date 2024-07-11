@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import DashboardStats from "./components/DashboardStats";
 import AmountStats from "./components/AmountStats";
 import PageStats from "./components/PageStats";
-
 import UserGroupIcon from "@heroicons/react/24/outline/UserGroupIcon";
 import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
 import CircleStackIcon from "@heroicons/react/24/outline/CircleStackIcon";
@@ -10,10 +13,8 @@ import UserChannels from "./components/UserChannels";
 import LineChart from "./components/LineChart";
 import BarChart from "./components/BarChart";
 import DashboardTopBar from "./components/DashboardTopBar";
-import { useDispatch } from "react-redux";
-import { showNotification } from "../common/headerSlice";
 import DoughnutChart from "./components/DoughnutChart";
-import { useState } from "react";
+import { showNotification } from "../common/headerSlice";
 
 const statsData = [
   {
@@ -75,6 +76,18 @@ const statsData = [
 function Dashboard() {
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    // Cek apakah login berhasil
+    const loginSuccess = localStorage.getItem("login_success");
+    if (loginSuccess) {
+      // Tampilkan notifikasi
+      toast.success("Login berhasil! Selamat datang di dashboard Anda.");
+
+      // Hapus status login berhasil dari localStorage
+      localStorage.removeItem("login_success");
+    }
+  }, []);
+
   const updateDashboardPeriod = (newRange) => {
     // Dashboard range changed, write code to refresh your values
     dispatch(
@@ -87,6 +100,7 @@ function Dashboard() {
 
   return (
     <>
+      <ToastContainer />
       {/** ---------------------- Select Period Content ------------------------- */}
       <DashboardTopBar updateDashboardPeriod={updateDashboardPeriod} />
 
@@ -104,14 +118,12 @@ function Dashboard() {
       </div>
 
       {/** ---------------------- Different stats content 2 ------------------------- */}
-
       <div className="grid lg:grid-cols-2 mt-10 grid-cols-1 gap-6">
         <AmountStats />
         <PageStats />
       </div>
 
       {/** ---------------------- User source channels table  ------------------------- */}
-
       <div className="grid lg:grid-cols-2 mt-4 grid-cols-1 gap-6">
         <UserChannels />
         <DoughnutChart />

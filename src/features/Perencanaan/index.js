@@ -82,15 +82,8 @@ function DesignAset() {
 
   const fetchAllAssets = async () => {
     try {
-      const response = await fetchData(API_URL);
-      const result = response.data.map((item) => ({
-        ...item,
-        nama_aset: item.aset.nama_aset,
-        aset_id: item.aset._id,
-        nama_vendor: item.vendor.nama_vendor,
-        tahun_produksi: item.aset.tahun_produksi,
-      }));
-      setAllAssets(result.reverse());
+      const response = await fetchData(ASET_API_URL);
+      setAllAssets(response.data);
     } catch (error) {
       console.error("Fetching all assets error:", error.message);
     }
@@ -141,12 +134,11 @@ function DesignAset() {
 
   const applySearch = () => {
     if (searchQuery === "") {
-      setAssets(allAssets);
-      setTotalPages(Math.ceil(allAssets.length / ITEMS_PER_PAGE));
+      fetchAssets();
       return;
     }
 
-    const filteredAssets = allAssets.filter((asset) =>
+    const filteredAssets = assets.filter((asset) =>
       asset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setAssets(filteredAssets);
@@ -165,19 +157,21 @@ function DesignAset() {
 
   const handleEditAsset = async (asset) => {
     try {
+      const response = await axios.get(`${API_URL}/${asset._id}`);
+      const data = response.data.data;
       setEditFormData({
-        _id: asset._id,
-        aset_id: asset.aset._id,
-        nama_aset: asset.aset.nama_aset,
-        kondisiAset: asset.kondisi_aset,
-        usiaAsetSaatIni: asset.usia_aset,
-        maksimalUsiaAset: asset.maks_usia_aset,
-        tahun_produksi: asset.tahun_produksi,
-        deskripsiKerusakan: asset.deskripsi,
-        tanggalRencanaPemeliharaan: new Date(asset.tgl_perencanaan),
-        statusPerencanaan: asset.status_aset,
-        vendorPengelola: asset.vendor._id,
-        infoVendor: asset.vendor.telp_vendor,
+        _id: data._id,
+        aset_id: data.aset._id,
+        nama_aset: data.aset.nama_aset,
+        kondisiAset: data.kondisi_aset,
+        usiaAsetSaatIni: data.usia_aset,
+        maksimalUsiaAset: data.maks_usia_aset,
+        tahun_produksi: data.aset.tahun_produksi,
+        deskripsiKerusakan: data.deskripsi,
+        tanggalRencanaPemeliharaan: new Date(data.tgl_perencanaan),
+        statusPerencanaan: data.status_aset,
+        vendorPengelola: data.vendor._id,
+        infoVendor: data.vendor.telp_vendor,
       });
       setIsEditModalOpen(true);
     } catch (error) {
@@ -231,12 +225,16 @@ function DesignAset() {
     if (name === "aset_id" && value) {
       try {
         const assetResponse = await fetchData(`${ASET_API_URL}/${value}`);
+        const assetData = assetResponse.data;
         setEditFormData((prevData) => ({
           ...prevData,
-          nama_aset: assetResponse.data.nama_aset,
-          vendorPengelola: assetResponse.data.vendor._id,
-          infoVendor: assetResponse.data.vendor.telp_vendor,
-          tahun_produksi: assetResponse.data.tahun_produksi,
+          nama_aset: assetData.nama_aset,
+          vendorPengelola: assetData.vendor._id,
+          infoVendor: assetData.vendor.telp_vendor,
+          tahun_produksi: assetData.tahun_produksi,
+          usiaAsetSaatIni: assetData.usia_aset,
+          maksimalUsiaAset: assetData.maks_usia_aset,
+          deskripsiKerusakan: assetData.deskripsi,
         }));
       } catch (error) {
         console.error("Fetching asset error:", error.message);

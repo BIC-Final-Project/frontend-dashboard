@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import ErrorText from "../../components/Typography/ErrorText";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import InputText from "../../components/Input/InputText";
-import LoginImage from "../../assets/Login.png";
-import LogoWhite from "../../assets/LogoWhite.svg";
+import LoginImage from "../../assets/Login.svg"; // Update path if needed
+import LogoWhite from "../../assets/LogoBlack.svg";
 import BASE_URL_API from "../../config";
-import axios from 'axios';
+import axios from "axios";
 
 function Login() {
   const INITIAL_LOGIN_OBJ = {
@@ -14,17 +15,21 @@ function Login() {
   };
 
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [loginObj, setLoginObj] = useState(INITIAL_LOGIN_OBJ);
 
   const submitForm = async (e) => {
     e.preventDefault();
-    setErrorMessage("");
 
-    if (loginObj.emailId.trim() === "")
-      return setErrorMessage("Email Id is required!");
-    if (loginObj.password.trim() === "")
-      return setErrorMessage("Password is required!");
+    if (loginObj.emailId.trim() === "") {
+      const message = "Email Id dibutuhkan!";
+      toast.error(message);
+      return;
+    }
+    if (loginObj.password.trim() === "") {
+      const message = "Password dibutuhkan!";
+      toast.error(message);
+      return;
+    }
 
     setLoading(true);
 
@@ -39,83 +44,95 @@ function Login() {
       const { token, refresh_token, data } = response.data;
 
       // Simpan token dan data pengguna di localStorage
-      localStorage.setItem("access_token", response.data.token);
+      localStorage.setItem("access_token", token);
       localStorage.setItem("refresh_token", refresh_token);
       localStorage.setItem("user", JSON.stringify(data));
 
       setLoading(false);
-      window.location.href = "/app/asset/detail-aset";
+
+      // Simpan status login berhasil di localStorage
+      localStorage.setItem("login_success", "true");
+
+      // Alihkan pengguna ke dashboard
+      window.location.href = "/app/dashboard";
     } catch (error) {
       setLoading(false);
-      setErrorMessage("Email or Password is wrong!");
+      const message = "Email atau Password salah!";
+      toast.error(message);
       console.error(error);
     }
   };
 
   const updateFormValue = ({ updateType, value }) => {
-    setErrorMessage("");
     setLoginObj({ ...loginObj, [updateType]: value });
   };
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center">
+      <ToastContainer />
       <div className="card mx-auto w-full max-w-5xl">
-        <div className="grid md:grid-cols-2 grid-cols-1 shadow-xl bg-base-100 rounded-[80px]">
+        <div className="grid md:grid-cols-2 grid-cols-1 shadow-xl bg-base-100 rounded-[80px] overflow-hidden">
           <div className="relative">
             <img
               src={LoginImage}
               alt="Login"
-              className="object-cover rounded-l-[80px] hidden md:block"
+              className="object-cover w-full h-full md:h-[700px]"
+              style={{
+                borderTopLeftRadius: "70px",
+                borderBottomLeftRadius: "70px",
+              }}
             />
           </div>
-          <div className="pb-20 pt-10 px-10">
-            <div>
-              <img src={LogoWhite} alt="Logo" className="w-[140px] my-3" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">Login</h2>
-            <p className="text-sm">
-              Masuk dengan data Anda yang sudah di daftarkan.
-            </p>
-            <form onSubmit={submitForm}>
-              <div className="mb-4">
-                <InputText
-                  type="emailId"
-                  defaultValue={loginObj.emailId}
-                  updateType="emailId"
-                  containerStyle="mt-4"
-                  labelTitle="Email Id"
-                  updateFormValue={updateFormValue}
-                />
-
-                <InputText
-                  defaultValue={loginObj.password}
-                  type="password"
-                  updateType="password"
-                  containerStyle="mt-4"
-                  labelTitle="Password"
-                  updateFormValue={updateFormValue}
-                />
-              </div>
-
-              <div className="text-right text-primary">
-                <Link to="/forgot-password">
-                  <span className="text-sm inline-block hover:text-primary hover:underline hover:cursor-pointer transition duration-200">
-                    Forgot Password?
-                  </span>
-                </Link>
-              </div>
-
-              <ErrorText styleClass="mt-8">{errorMessage}</ErrorText>
-              <button
-                type="submit"
-                className={
-                  "btn mt-2 w-full text-white bg-[#3A5913] hover:bg-[#617A42]" +
-                  (loading ? " loading" : "")
-                }
-              >
+          <div>
+            <img
+              src={LogoWhite}
+              alt="Logo"
+              className="w-[250px]"
+              style={{ padding: "32px" }}
+            />
+            <div
+              className="pb-20 px-8 flex flex-col justify-center relative"
+              style={{ padding: "32px" }}
+            >
+              <div className="flex justify-center mb-6"></div>
+              <h2 className="text-3xl font-semibold mb-2 text-center md:text-left">
                 Login
-              </button>
-            </form>
+              </h2>
+              <p className="text-sm text-center md:text-left mb-6">
+                Masuk dengan data Anda yang sudah di daftarkan.
+              </p>
+              <form onSubmit={submitForm}>
+                <div className="mb-4">
+                  <InputText
+                    type="emailId"
+                    defaultValue={loginObj.emailId}
+                    updateType="emailId"
+                    containerStyle="mt-4"
+                    labelTitle="Email"
+                    updateFormValue={updateFormValue}
+                    placeholder="Masukkan username atau email anda"
+                  />
+
+                  <InputText
+                    defaultValue={loginObj.password}
+                    type="password"
+                    updateType="password"
+                    containerStyle="mt-4"
+                    labelTitle="Password"
+                    updateFormValue={updateFormValue}
+                    placeholder="Masukkan kata sandi anda"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn mt-2 w-full text-white bg-[#3A5913] hover:bg-[#617A42]"
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : "Login"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
