@@ -16,11 +16,15 @@ import { fetchData, updateData, deleteData } from "../../utils/utils";
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
 const DARURAT_URL = `${BASE_URL_API}api/v1/manage-aset/darurat`;
 const RENCANA_URL = `${BASE_URL_API}api/v1/manage-aset/rencana`;
+const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
+const ADMIN_API_URL = `${BASE_URL_API}api/v1/manage-aset/admin`;
 const ITEMS_PER_PAGE = 10;
 
 function PemeliharaanAset() {
   const [assets, setAssets] = useState([]);
   const [rencanaData, setRencanaData] = useState([]);
+  const [vendorList, setVendorList] = useState([]);
+  const [adminList, setAdminList] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [modal, setModal] = useState({
@@ -38,6 +42,7 @@ function PemeliharaanAset() {
     kondisi_stlh_perbaikan: "",
     status_pemeliharaan: "",
     penanggung_jawab: "",
+    pengawas: "",
     deskripsi_pemeliharaan: "",
     deskripsi_kerusakan: "",
     tgl_dilakukan: new Date(),
@@ -55,6 +60,7 @@ function PemeliharaanAset() {
     aset_masuk: "",
     garansi_dimulai: "",
     garansi_berakhir: "",
+    gambar_aset: "", // Added to handle asset image
     status: "",
   });
   const { enqueueSnackbar } = useSnackbar();
@@ -64,6 +70,8 @@ function PemeliharaanAset() {
   useEffect(() => {
     fetchAssets();
     fetchRencanaData();
+    fetchVendorData();
+    fetchAdminData();
   }, [searchQuery, filterStatus]); // Add dependencies
 
   const fetchAssets = async () => {
@@ -138,6 +146,36 @@ function PemeliharaanAset() {
     }
   };
 
+  const fetchVendorData = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Ensure you have the token
+      const response = await fetchData(VENDOR_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setVendorList(response.data);
+    } catch (error) {
+      console.error("Fetching vendor error:", error.message);
+      enqueueSnackbar("Gagal memuat data vendor.", { variant: "error" });
+    }
+  };
+
+  const fetchAdminData = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Ensure you have the token
+      const response = await fetchData(ADMIN_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setAdminList(response.data);
+    } catch (error) {
+      console.error("Fetching admin error:", error.message);
+      enqueueSnackbar("Gagal memuat data admin.", { variant: "error" });
+    }
+  };
+
   const fetchRencanaById = async (rencana_id) => {
     try {
       const token = localStorage.getItem("token"); // Ensure you have the token
@@ -166,41 +204,81 @@ function PemeliharaanAset() {
       const data = response.data;
       console.log("Fetched data:", data);
 
-      const rencanaData = await fetchRencanaById(data.rencana_id);
+      if (status === "Data Pemeliharaan") {
+        const rencanaData = await fetchRencanaById(data.rencana_id);
 
-      setEditFormData({
-        asset_id: data._id, // Set asset ID for later use
-        rencana_id: data.rencana_id || "",
-        kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
-        status_pemeliharaan: data.status_pemeliharaan || "",
-        penanggung_jawab: data.penanggung_jawab || "",
-        deskripsi_pemeliharaan: data.deskripsi || "",
-        deskripsi_kerusakan: rencanaData.deskripsi || "",
-        tgl_dilakukan: data.tgl_dilakukan
-          ? moment(data.tgl_dilakukan).toDate()
-          : new Date(),
-        waktu_pemeliharaan: data.waktu_pemeliharaan || "",
-        usia_aset_saat_ini: rencanaData.usia_aset || "",
-        maksimal_usia_aset: rencanaData.maks_usia_aset || "",
-        tahun_produksi: rencanaData.aset.tahun_produksi || "",
-        vendor_pengelola: rencanaData.vendor.nama_vendor || "",
-        info_vendor: rencanaData.vendor.telp_vendor || "",
-        nama_aset: rencanaData.aset.nama_aset || "",
-        kategori_aset: rencanaData.aset.kategori_aset || "",
-        merek_aset: rencanaData.aset.merek_aset || "",
-        kode_produksi: rencanaData.aset.kode_produksi || "",
-        jumlah_aset: rencanaData.aset.jumlah_aset || "",
-        aset_masuk: rencanaData.aset.aset_masuk
-          ? moment(rencanaData.aset.aset_masuk).toDate()
-          : new Date(),
-        garansi_dimulai: rencanaData.aset.garansi_dimulai
-          ? moment(rencanaData.aset.garansi_dimulai).toDate()
-          : new Date(),
-        garansi_berakhir: rencanaData.aset.garansi_berakhir
-          ? moment(rencanaData.aset.garansi_berakhir).toDate()
-          : new Date(),
-        status, // simpan status data
-      });
+        setEditFormData({
+          asset_id: data._id, // Set asset ID for later use
+          rencana_id: data.rencana_id || "",
+          kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
+          status_pemeliharaan: data.status_pemeliharaan || "",
+          penanggung_jawab: data.penanggung_jawab || "",
+          pengawas: data.admin ? data.admin.nama_lengkap : "",
+          deskripsi_pemeliharaan: data.deskripsi || "",
+          deskripsi_kerusakan: rencanaData.deskripsi || "",
+          tgl_dilakukan: data.tgl_dilakukan
+            ? moment(data.tgl_dilakukan).toDate()
+            : new Date(),
+          waktu_pemeliharaan: data.waktu_pemeliharaan || "",
+          usia_aset_saat_ini: rencanaData.usia_aset || "",
+          maksimal_usia_aset: rencanaData.maks_usia_aset || "",
+          tahun_produksi: rencanaData.aset.tahun_produksi || "",
+          vendor_pengelola: rencanaData.vendor.nama_vendor || "",
+          info_vendor: rencanaData.vendor.telp_vendor || "",
+          nama_aset: rencanaData.aset.nama_aset || "",
+          kategori_aset: rencanaData.aset.kategori_aset || "",
+          merek_aset: rencanaData.aset.merek_aset || "",
+          kode_produksi: rencanaData.aset.kode_produksi || "",
+          jumlah_aset: rencanaData.aset.jumlah_aset || "",
+          aset_masuk: rencanaData.aset.aset_masuk
+            ? moment(rencanaData.aset.aset_masuk).toDate()
+            : new Date(),
+          garansi_dimulai: rencanaData.aset.garansi_dimulai
+            ? moment(rencanaData.aset.garansi_dimulai).toDate()
+            : new Date(),
+          garansi_berakhir: rencanaData.aset.garansi_berakhir
+            ? moment(rencanaData.aset.garansi_berakhir).toDate()
+            : new Date(),
+          status, // simpan status data
+        });
+      } else if (status === "Data Darurat") {
+        setEditFormData({
+          asset_id: data._id, // Set asset ID for later use
+          rencana_id: data.rencana_id || "",
+          kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
+          status_pemeliharaan: data.status_pemeliharaan || "",
+          penanggung_jawab: data.penanggung_jawab || "",
+          pengawas: data.admin ? data.admin.nama_lengkap : "",
+          deskripsi_pemeliharaan: data.deskripsi || "",
+          deskripsi_kerusakan: data.deskripsi_kerusakan || "",
+          tgl_dilakukan: data.tgl_dilakukan
+            ? moment(data.tgl_dilakukan).toDate()
+            : new Date(),
+          waktu_pemeliharaan: data.waktu_pemeliharaan || "",
+          usia_aset_saat_ini: "", // Data Darurat doesn't have this field
+          maksimal_usia_aset: "", // Data Darurat doesn't have this field
+          tahun_produksi: data.aset.tahun_produksi || "",
+          vendor_pengelola: data.vendor.nama_vendor || "",
+          info_vendor: data.vendor.telp_vendor || "",
+          nama_aset: data.aset.nama_aset || "",
+          kategori_aset: data.aset.kategori_aset || "",
+          merek_aset: data.aset.merek_aset || "",
+          kode_produksi: data.aset.kode_produksi || "",
+          jumlah_aset: data.aset.jumlah_aset || "",
+          aset_masuk: data.aset.aset_masuk
+            ? moment(data.aset.aset_masuk).toDate()
+            : new Date(),
+          garansi_dimulai: data.aset.garansi_dimulai
+            ? moment(data.aset.garansi_dimulai).toDate()
+            : new Date(),
+          garansi_berakhir: data.aset.garansi_berakhir
+            ? moment(data.aset.garansi_berakhir).toDate()
+            : new Date(),
+          gambar_aset: data.gambar_darurat.image_url || "", // Set asset image
+          status, // simpan status data
+        });
+      }
+
       if (viewOnly) {
         setIsViewModalOpen(true);
       } else {
@@ -303,23 +381,24 @@ function PemeliharaanAset() {
       rencana_id: editFormData.rencana_id,
       kondisi_stlh_perbaikan: editFormData.kondisi_stlh_perbaikan,
       status_pemeliharaan: editFormData.status_pemeliharaan,
-      penanggung_jawab: editFormData.penanggung_jawab,
+      penanggung_jawab: editFormData.pengawas, // Update for pengawas
       deskripsi: editFormData.deskripsi_pemeliharaan,
       tgl_dilakukan: moment(editFormData.tgl_dilakukan).format("YYYY-MM-DD"),
       waktu_pemeliharaan: editFormData.waktu_pemeliharaan,
+      admin_id: editFormData.penanggung_jawab, // Add admin_id for penanggung_jawab
     };
     console.log("Payload data:", payload);
     try {
       const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await updateData(
-        `${API_URL}/${editFormData.asset_id}`, // Use asset ID for update
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const url =
+        editFormData.status === "Data Darurat"
+          ? `${DARURAT_URL}/${editFormData.asset_id}`
+          : `${API_URL}/${editFormData.asset_id}`;
+      const response = await updateData(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log("Response data:", response);
       fetchAssets();
       enqueueSnackbar("Data berhasil diperbarui!", { variant: "success" });
@@ -646,7 +725,7 @@ function PemeliharaanAset() {
                   >
                     <option value="">Pilih status pemeliharaan</option>
                     <option value="Selesai">Perbaikan berhasil</option>
-                    <option value="Sedang berlangsung ">
+                    <option value="Sedang berlangsung">
                       Sedang berlangsung
                     </option>
                     <option value="Perbaikan gagal">Perbaikan gagal</option>
@@ -698,14 +777,39 @@ function PemeliharaanAset() {
                   >
                     Nama Penanggung Jawab *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="penanggung_jawab"
                     name="penanggung_jawab"
                     value={editFormData.penanggung_jawab}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
+                  >
+                    <option value="">Pilih penanggung jawab</option>
+                    {adminList.map((admin) => (
+                      <option key={admin._id} value={admin._id}>
+                        {admin.nama_lengkap}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="pengawas" className="block font-medium">
+                    Pengawas
+                  </label>
+                  <select
+                    id="pengawas"
+                    name="pengawas"
+                    value={editFormData.pengawas}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  >
+                    <option value="">Pilih pengawas</option>
+                    {adminList.map((admin) => (
+                      <option key={admin._id} value={admin.nama_lengkap}>
+                        {admin.nama_lengkap}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label
@@ -723,8 +827,78 @@ function PemeliharaanAset() {
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
+                <div>
+                  <label htmlFor="tgl_dilakukan" className="block font-medium">
+                    Tanggal Pemeliharaan Dilakukan
+                  </label>
+                  <DatePicker
+                    selected={editFormData.tgl_dilakukan}
+                    onChange={(date) => handleDateChange(date, "tgl_dilakukan")}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    dateFormat="MMMM d, yyyy"
+                    wrapperClassName="date-picker"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="waktu_pemeliharaan"
+                    className="block font-medium"
+                  >
+                    Perkiraan Waktu Pemeliharaan
+                  </label>
+                  <input
+                    type="text"
+                    id="waktu_pemeliharaan"
+                    name="waktu_pemeliharaan"
+                    value={editFormData.waktu_pemeliharaan}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  />
+                </div>
               </div>
             </CardInput>
+
+            {editFormData.status === "Data Darurat" && (
+              <CardInput title="Dokumen Aset" className="mt-4">
+                <div className="flex flex-col items-center">
+                  <div className="mb-2">
+                    <img
+                      src={editFormData.gambar_aset || "/default-image.png"}
+                      alt="Asset"
+                      className="w-24 h-24 object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          gambar_aset: URL.createObjectURL(e.target.files[0]),
+                        })
+                      }
+                      className="hidden"
+                      id="file-input"
+                    />
+                    <label
+                      htmlFor="file-input"
+                      className="btn btn-outline btn-secondary"
+                    >
+                      Choose File
+                    </label>
+                    <span className="ml-2">
+                      {editFormData.gambar_aset
+                        ? "File Selected"
+                        : "No File Chosen"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Anda bisa mengunggah satu foto utama aset di sini.
+                  </p>
+                </div>
+              </CardInput>
+            )}
 
             <div className="flex justify-end mt-4">
               <Button label="Simpan" type="submit" />
@@ -917,6 +1091,20 @@ function PemeliharaanAset() {
               </div>
             </div>
           </CardInput>
+
+          {editFormData.status === "Data Darurat" && (
+            <CardInput title="Dokumen Aset" className="mt-4">
+              <div className="flex flex-col items-center">
+                <div className="mb-2">
+                  <img
+                    src={editFormData.gambar_aset || "/default-image.png"}
+                    alt="Asset"
+                    className="w-24 h-24 object-cover"
+                  />
+                </div>
+              </div>
+            </CardInput>
+          )}
 
           <div className="flex justify-end mt-4">
             <Button label="Tutup" onClick={closeViewModal} />

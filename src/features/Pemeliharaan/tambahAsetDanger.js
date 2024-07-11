@@ -8,10 +8,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
 
-// Definisikan BASE_URL_API
 const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
 const API_URL_ASSET = `${BASE_URL_API}api/v1/manage-aset/aset?limit=10&page=1`;
 const API_URL_POST = `${BASE_URL_API}api/v1/manage-aset/darurat`;
+const ADMIN_API_URL = `${BASE_URL_API}api/v1/manage-aset/admin`;
 
 function TambahAsetDanger() {
   const { enqueueSnackbar } = useSnackbar();
@@ -30,21 +30,29 @@ function TambahAsetDanger() {
     tanggalPemeliharaan: new Date(),
     perkiraanWaktuPemeliharaan: "",
     kondisiStlhPerbaikan: "",
+    admin_id: "",
+    pengawas: "",
   });
+
+  const [imagePreview, setImagePreview] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [file, setFile] = useState(null);
 
   const [asetList, setAsetList] = useState([]);
   const [vendorList, setVendorList] = useState([]);
+  const [adminList, setAdminList] = useState([]);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const asetResponse = await axios.get(API_URL_ASSET);
-        console.log("Aset Response:", asetResponse.data); // Tambahkan log untuk memeriksa respons
         setAsetList(asetResponse.data.data || []);
 
         const vendorResponse = await axios.get(VENDOR_API_URL);
-        console.log("Vendor Response:", vendorResponse.data); // Tambahkan log untuk memeriksa respons
-        setVendorList(vendorResponse.data.data || []); // Asumsikan data vendor berada di vendorResponse.data.data
+        setVendorList(vendorResponse.data.data || []);
+
+        const adminResponse = await axios.get(ADMIN_API_URL);
+        setAdminList(adminResponse.data.data || []);
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
         enqueueSnackbar("Gagal memuat data aset!", { variant: "error" });
@@ -73,29 +81,57 @@ function TambahAsetDanger() {
         usiaAsetSaatIni: "", // This should be fetched from relevant data if available
         maksimalUsiaAset: "", // This should be fetched from relevant data if available
         tahunProduksi: selectedAset.tahun_produksi,
-        deskripsiKerusakan: selectedAset.deskripsi_aset,
+        deskripsiKerusakan: "", // Ensuring this remains empty
         vendorPengelola: selectedAset.vendor_id,
         infoVendor: selectedAset.vendor ? selectedAset.vendor.telp_vendor : "",
       }));
     }
   };
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFileName(file.name);
+      setFile(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("AsetID", formData.namaAset);
+    formDataToSend.append("VendorID", formData.vendorPengelola);
+    formDataToSend.append(
+      "KondisiStlhPerbaikan",
+      formData.kondisiStlhPerbaikan
+    );
+    formDataToSend.append("StatusPemeliharaan", formData.statusPemeliharaan);
+    formDataToSend.append("PenanggungJawab", formData.pengawas);
+    formDataToSend.append("Deskripsi", formData.deskripsiPemeliharaan);
+    formDataToSend.append(
+      "TanggalDilakukan",
+      formData.tanggalPemeliharaanAset.toISOString().split("T")[0]
+    );
+    formDataToSend.append(
+      "WaktuPemeliharaan",
+      formData.perkiraanWaktuPemeliharaan
+    );
+    formDataToSend.append("AdminID", formData.namaPenanggungJawab);
+    formDataToSend.append("gambar", file);
+
     try {
-      const payload = {
-        AsetID: formData.namaAset,
-        VendorID: formData.vendorPengelola,
-        kondisi_stlh_perbaikan: formData.kondisiStlhPerbaikan,
-        status_pemeliharaan: formData.statusPemeliharaan,
-        penanggung_jawab: formData.namaPenanggungJawab,
-        deskripsi: formData.deskripsiPemeliharaan,
-        tgl_dilakukan: formData.tanggalPemeliharaanAset
-          .toISOString()
-          .split("T")[0],
-        waktu_pemeliharaan: formData.perkiraanWaktuPemeliharaan,
-      };
-      await axios.post(API_URL_POST, payload);
+      await axios.post(API_URL_POST, formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
     } catch (error) {
       console.error("Error posting data:", error);
@@ -211,11 +247,9 @@ function TambahAsetDanger() {
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               >
                 <option value="">Pilih status pemeliharaan</option>
-                <option value="Perbaikan berhasil">Perbaikan berhasil</option>
-                <option value="Dalam perbaikan">Dalam perbaikan</option>
-                <option value="Tidak dapat diperbaiki">
-                  Tidak dapat diperbaiki
-                </option>
+                <option value="Selesai">Selesai</option>
+                <option value="Sedang berlangsung">Sedang berlangsung</option>
+                <option value="Perbaikan gagal">Perbaikan gagal</option>
               </select>
             </div>
           </div>
@@ -261,23 +295,47 @@ function TambahAsetDanger() {
         </CardInput>
 
         <CardInput title="Informasi Pemeliharaan">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="namaPenanggungJawab"
                 className="block font-medium"
               >
-                Nama Penanggung Jawab
+                Nama Penanggung Jawab *
               </label>
-              <input
-                type="text"
+              <select
                 id="namaPenanggungJawab"
                 name="namaPenanggungJawab"
                 value={formData.namaPenanggungJawab}
                 onChange={handleInputChange}
-                placeholder="Nama penanggung jawab"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-              />
+              >
+                <option value="">Pilih penanggung jawab</option>
+                {adminList.map((admin) => (
+                  <option key={admin._id} value={admin._id}>
+                    {admin.nama_lengkap}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="pengawas" className="block font-medium">
+                Pengawas
+              </label>
+              <select
+                id="pengawas"
+                name="pengawas"
+                value={formData.pengawas}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+              >
+                <option value="">Pilih pengawas</option>
+                {adminList.map((admin) => (
+                  <option key={admin._id} value={admin.nama_lengkap}>
+                    {admin.nama_lengkap}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label
@@ -331,6 +389,57 @@ function TambahAsetDanger() {
               />
             </div>
           </div>
+        </CardInput>
+
+        <CardInput title="Dokumen Aset">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center justify-center w-full sm:w-24 h-24 bg-gray-200 rounded">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover rounded"
+                />
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="h-12 w-12 text-gray-400 mx-auto"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 7h18M3 12h18m-9 5h9"
+                  />
+                </svg>
+              )}
+            </div>
+
+            <div className="flex items-center w-full sm:w-auto p-2 rounded">
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer text-green-500 hover:text-green-600 border border-green-500 font-medium py-2 px-6 rounded bg-white flex-grow sm:flex-grow-0"
+              >
+                Choose File
+                <input
+                  id="file-upload"
+                  name="file-upload"
+                  type="file"
+                  className="sr-only"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </label>
+              <span className="ml-2 text-sm text-gray-500" id="file-chosen">
+                {imagePreview ? fileName : "No File Chosen"}
+              </span>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
+            Anda bisa mengunggah satu foto utama aset di sini.
+          </p>
         </CardInput>
 
         <div className="flex justify-end mt-4">

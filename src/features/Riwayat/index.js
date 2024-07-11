@@ -18,6 +18,7 @@ const ITEMS_PER_PAGE = 10;
 
 function RiwayatAset() {
   const [assets, setAssets] = useState([]);
+  const [filteredAssets, setFilteredAssets] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -26,29 +27,58 @@ function RiwayatAset() {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterConditions, setFilterConditions] = useState({
-    kondisi: "",
-    status: "",
+    selesai: false,
+    Perbaikan_gagal: false,
   });
 
   useEffect(() => {
-    fetchAssets(currentPage);
-  }, [currentPage, searchQuery]);
+    fetchAssets();
+  }, []);
 
-  const fetchAssets = async (page) => {
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery, filterConditions]);
+
+  const fetchAssets = async () => {
     try {
-      const limit = 10;
-      const response = await fetchData(
-        `${API_URL}?limit=${limit}&page=${page}`
-      );
-      const { data, pagination } = response;
+      const response = await fetchData(`${API_URL}`);
+      const { data } = response;
+
       setAssets(data);
-      if (pagination) {
-        setTotalPages(pagination.max_page);
-      }
+      setFilteredAssets(data);
+      setTotalPages(Math.ceil(data.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Error fetching data.", { variant: "error" });
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = assets;
+
+    if (searchQuery) {
+      filtered = filtered.filter((asset) =>
+        asset.aset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (filterConditions.selesai && filterConditions.Perbaikan_gagal) {
+      // Do nothing, show all
+    } else if (filterConditions.selesai) {
+      filtered = filtered.filter(
+        (asset) => asset.status_pemeliharaan === "Selesai"
+      );
+    } else if (filterConditions.Perbaikan_gagal) {
+      filtered = filtered.filter(
+        (asset) =>
+          asset.status_pemeliharaan === "Perbaikan gagal" ||
+          asset.status_pemeliharaan === "Perbaikan gagal"
+      );
+    }
+
+    setFilteredAssets(filtered);
+    setTotalPages(Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    setCurrentPage(1); // Reset to the first page
   };
 
   const handleViewDetail = (id) => {
@@ -83,15 +113,15 @@ function RiwayatAset() {
   };
 
   const handleFilterChange = (e) => {
-    const { name, value, checked } = e.target;
+    const { name, checked } = e.target;
     setFilterConditions((prevState) => ({
       ...prevState,
-      [name]: checked ? value : "",
+      [name]: checked,
     }));
   };
 
   const handleFilterApply = () => {
-    // Apply filtering logic here
+    applyFilters();
     setIsFilterOpen(false);
   };
 
@@ -105,10 +135,10 @@ function RiwayatAset() {
           "Vendor Pengelola",
           "Penanggung Jawab",
           "Kondisi Aset",
-          "Status",
+          "Status Pemeliharaan",
         ],
       ],
-      body: assets.map((asset) => [
+      body: filteredAssets.map((asset) => [
         asset.aset.nama_aset,
         moment(asset.tgl_dilakukan).format("DD MMM YYYY"),
         asset.vendor.nama_vendor,
@@ -119,6 +149,11 @@ function RiwayatAset() {
     });
     doc.save("riwayat_aset.pdf");
   };
+
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <>
@@ -151,19 +186,23 @@ function RiwayatAset() {
                 <th>Vendor Pengelola</th>
                 <th>Penanggung Jawab</th>
                 <th>Kondisi Aset</th>
-                <th>Status</th>
+                <th>Status Pemeliharaan</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {assets.map((asset) => (
+              {paginatedAssets.map((asset) => (
                 <tr key={asset._id}>
-                  <td>{asset.aset.nama_aset}</td>
-                  <td>{moment(asset.tgl_dilakukan).format("DD MMM YYYY")}</td>
-                  <td>{asset.vendor.nama_vendor}</td>
-                  <td>{asset.penanggung_jawab}</td>
-                  <td>{asset.kondisi_stlh_perbaikan}</td>
-                  <td>{asset.status_pemeliharaan}</td>
+                  <td>{asset.aset.nama_aset || "N/A"}</td>
+                  <td>
+                    {asset.tgl_dilakukan
+                      ? moment(asset.tgl_dilakukan).format("DD MMM YYYY")
+                      : "N/A"}
+                  </td>
+                  <td>{asset.vendor.nama_vendor || "N/A"}</td>
+                  <td>{asset.penanggung_jawab || "N/A"}</td>
+                  <td>{asset.kondisi_stlh_perbaikan || "N/A"}</td>
+                  <td>{asset.status_pemeliharaan || "N/A"}</td>
                   <td>
                     <button
                       className="btn btn-square btn-ghost"
@@ -221,29 +260,27 @@ function RiwayatAset() {
             <div className="mb-4 flex items-center border rounded-lg p-2">
               <input
                 type="checkbox"
-                id="statusBerhasil"
-                name="status"
-                value="Selesai"
+                id="statusSelesai"
+                name="selesai"
                 onChange={handleFilterChange}
                 className="form-checkbox h-4 w-4 text-[#4A5B34] rounded-md"
-                checked={filterConditions.status === "Selesai"}
+                checked={filterConditions.selesai}
               />
-              <label htmlFor="statusBerhasil" className="cursor-pointer ml-2">
+              <label htmlFor="statusSelesai" className="cursor-pointer ml-2">
                 Selesai
               </label>
             </div>
             <div className="mb-4 flex items-center border rounded-lg p-2">
               <input
                 type="checkbox"
-                id="statusGagal"
-                name="status"
-                value="Perbaikan gagal"
+                id="Perbaikan_gagal"
+                name="Perbaikan_gagal"
                 onChange={handleFilterChange}
                 className="form-checkbox h-4 w-4 text-[#4A5B34] rounded-md"
-                checked={filterConditions.status === "Perbaikan gagal"}
+                checked={filterConditions.Perbaikan_gagal}
               />
-              <label htmlFor="statusGagal" className="cursor-pointer ml-2">
-                Perbaikan Gagal
+              <label htmlFor="Perbaikan_gagal" className="cursor-pointer ml-2">
+                Perbaikan gagal
               </label>
             </div>
             <button
