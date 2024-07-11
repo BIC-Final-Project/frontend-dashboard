@@ -11,6 +11,7 @@ import { fetchData, postData } from "../../utils/utils";
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
 const API_URL_RENCANA = `${BASE_URL_API}api/v1/manage-aset/rencana`;
 const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
+const ADMIN_API_URL = `${BASE_URL_API}api/v1/manage-aset/admin`;
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,9 +32,11 @@ function TambahAset() {
     tgl_dilakukan: new Date(),
     waktu_pemeliharaan: "",
     kondisi_stlh_perbaikan: "",
+    pengawas: "",
   });
   const [asetList, setAsetList] = useState([]);
   const [vendorList, setVendorList] = useState([]);
+  const [adminList, setAdminList] = useState([]);
   const [selectedRencana, setSelectedRencana] = useState(null);
 
   useEffect(() => {
@@ -44,6 +47,9 @@ function TambahAset() {
 
         const vendorResponse = await fetchData(VENDOR_API_URL);
         setVendorList(vendorResponse.data);
+
+        const adminResponse = await fetchData(ADMIN_API_URL);
+        setAdminList(adminResponse.data);
 
         if (asetResponse.data.length === 0) {
           enqueueSnackbar("Tidak ada aset yang tersedia untuk pemeliharaan!", {
@@ -92,14 +98,25 @@ function TambahAset() {
         tgl_dilakukan: new Date(),
         waktu_pemeliharaan: "",
         kondisi_stlh_perbaikan: "",
+        pengawas: "",
       });
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const submitData = {
+      rencana_id: formData.rencana_id,
+      admin_id: formData.penanggung_jawab, // Sesuai dengan form admin_id yang dipilih
+      kondisi_stlh_perbaikan: formData.kondisi_stlh_perbaikan,
+      status_pemeliharaan: formData.status_pemeliharaan,
+      penanggung_jawab: formData.pengawas, // Pengawas diisi ke penanggung_jawab
+      deskripsi: formData.deskripsi,
+      tgl_dilakukan: formData.tgl_dilakukan,
+      waktu_pemeliharaan: formData.waktu_pemeliharaan,
+    };
     try {
-      await postData(API_URL, formData);
+      await postData(API_URL, submitData);
       enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
     } catch (error) {
       console.error("Error posting data:", error);
@@ -261,10 +278,8 @@ function TambahAset() {
                 >
                   <option value="">Pilih status pemeliharaan</option>
                   <option value="Selesai">Selesai</option>
-                  <option value="Sedang berlangsung ">
-                    Sedang berlangsung
-                  </option>
-                  <option value="Perbaikan gagal">Perbaikan gagal</option>
+                  <option value="Sedang berlangsung">Sedang berlangsung</option>
+                  <option value="Perbaikan gagal">Perbaikan gagal</option>
                 </select>
               </div>
             </div>
@@ -313,21 +328,42 @@ function TambahAset() {
           <CardInput title="Informasi Pemeliharaan">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="namaPenanggungJawab"
-                  className="block font-medium"
-                >
-                  Nama Penanggung Jawab
+                <label htmlFor="penanggung_jawab" className="block font-medium">
+                  Nama Penanggung Jawab *
                 </label>
-                <input
-                  type="text"
+                <select
                   id="penanggung_jawab"
                   name="penanggung_jawab"
                   value={formData.penanggung_jawab}
                   onChange={handleInputChange}
-                  placeholder="Nama penanggung jawab"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                />
+                >
+                  <option value="">Pilih penanggung jawab</option>
+                  {adminList.map((admin) => (
+                    <option key={admin._id} value={admin._id}>
+                      {admin.nama_lengkap}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="pengawas" className="block font-medium">
+                  Pengawas
+                </label>
+                <select
+                  id="pengawas"
+                  name="pengawas"
+                  value={formData.pengawas}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                >
+                  <option value="">Pilih pengawas</option>
+                  {adminList.map((admin) => (
+                    <option key={admin._id} value={admin.nama_lengkap}>
+                      {admin.nama_lengkap}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label
@@ -360,7 +396,7 @@ function TambahAset() {
               </div>
               <div>
                 <label
-                  htmlFor="perkiraanWaktuPemeliharaan"
+                  htmlFor="waktu_pemeliharaan"
                   className="block font-medium"
                 >
                   Perkiraan Waktu Pemeliharaan

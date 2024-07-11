@@ -58,6 +58,8 @@ function DetailAset() {
   const [searchQuery, setSearchQuery] = useState("");
   const [vendor, setVendor] = useState(null);
 
+  console.log(editFormData);
+
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -182,7 +184,7 @@ function DetailAset() {
       jumlahAsetMasuk: asset.jumlah_aset || "",
       infoVendor: vendorData ? vendorData.telp_vendor : "",
       tanggalAsetMasuk: parseDate(asset.aset_masuk),
-      tanggalGaransiMulai: parseDate(asset.garansi_dimulai),
+      tanggalGaransiDimulai: parseDate(asset.garansi_dimulai),
       tanggalGaransiBerakhir: parseDate(asset.garansi_berakhir),
     });
 
@@ -284,7 +286,7 @@ function DetailAset() {
     );
     dataToUpdate.append(
       "garansidimulai",
-      moment(editFormData.tanggalGaransiMulai).format("YYYY-MM-DD")
+      moment(editFormData.tanggalGaransiDimulai).format("YYYY-MM-DD")
     );
     dataToUpdate.append(
       "GaransiBerakhir",
@@ -358,7 +360,66 @@ function DetailAset() {
 
   const handlePrint = () => {
     const doc = new jsPDF();
-    doc.autoTable({ html: "#asset-table" });
+    const columns = [
+      { header: "Foto Aset", dataKey: "gambar_aset" },
+      { header: "Nama Aset", dataKey: "namaAset" },
+      { header: "Tgl Aset Masuk", dataKey: "tglAsetMasuk" },
+      { header: "Masa Garansi Dimulai", dataKey: "masaGaransiDimulai" },
+      { header: "Masa Garansi Berakhir", dataKey: "masaGaransiBerakhir" },
+      { header: "Nama Vendor", dataKey: "namaVendor" },
+      { header: "Kategori", dataKey: "kategori" },
+      { header: "Jumlah Aset", dataKey: "jumlahAset" },
+    ];
+
+    const rows = paginatedAssets.map((asset) => ({
+      fotoAset: {
+        data: asset.gambar_aset.image_url,
+        type: "image",
+        width: 20,
+        height: 20,
+      },
+      namaAset: asset.nama_aset,
+      tglAsetMasuk: moment(asset.aset_masuk).format("DD MMM YYYY"),
+      masaGaransiDimulai: moment(asset.garansi_dimulai).format("DD MMM YYYY"),
+      masaGaransiBerakhir: moment(asset.garansi_berakhir).format("DD MMM YYYY"),
+      namaVendor: getVendorName(asset.vendor_id),
+      kategori: asset.kategori_aset,
+      jumlahAset: asset.jumlah_aset,
+    }));
+
+    doc.autoTable({
+      head: [columns.map((col) => col.header)],
+      body: rows.map((row) =>
+        columns.map((col) =>
+          col.dataKey === "fotoAset"
+            ? {
+                ...row[col.dataKey],
+                cellWidth: "wrap",
+                minCellHeight: 20,
+              }
+            : row[col.dataKey]
+        )
+      ),
+      didDrawCell: (data) => {
+        if (
+          data.column.dataKey === "fotoAset" &&
+          data.cell.section === "body"
+        ) {
+          const { data: imageUrl, width, height } = data.cell.raw;
+          if (imageUrl) {
+            doc.addImage(
+              imageUrl,
+              "JPEG",
+              data.cell.x + 2,
+              data.cell.y + 2,
+              width,
+              height
+            );
+          }
+        }
+      },
+    });
+
     doc.save("assets.pdf");
   };
 
@@ -591,7 +652,7 @@ function DetailAset() {
                       Masa Garansi Dimulai
                     </label>
                     <DatePicker
-                      selected={editFormData.tanggalGaransiMulai}
+                      selected={editFormData.tanggalGaransiDimulai}
                       onChange={(date) =>
                         handleDateChange(date, "tanggalGaransiMulai")
                       }
@@ -837,17 +898,19 @@ function DetailAset() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-medium">Nama Vendor</label>
-                  <p>{viewAssetData.vendor.nama_vendor}</p>
+                  <p>{viewAssetData.vendor?.nama_vendor || "Unknown Vendor"}</p>
                 </div>
                 <div>
                   <label className="block font-medium">Alamat Vendor</label>
-                  <p>{viewAssetData.vendor.alamat_vendor}</p>
+                  <p>
+                    {viewAssetData.vendor?.alamat_vendor || "Unknown Vendor"}
+                  </p>
                 </div>
                 <div>
                   <label className="block font-medium">
                     Informasi Vendor / No Telepon
                   </label>
-                  <p>{viewAssetData.vendor.telp_vendor}</p>
+                  <p>{viewAssetData.vendor?.telp_vendor || "Unknown Vendor"}</p>
                 </div>
               </div>
             </CardInput>

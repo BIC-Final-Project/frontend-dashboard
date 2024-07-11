@@ -6,14 +6,14 @@ import EyeIcon from "@heroicons/react/24/outline/EyeIcon";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FunnelIcon } from "@heroicons/react/24/outline"; // Use the correct icon
+import { FunnelIcon } from "@heroicons/react/24/outline";
 import { fetchData } from "../../utils/utils";
 import BASE_URL_API from "../../config";
 import Button from "../../components/Button";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-const API_URL = `${BASE_URL_API}/api/v1/manage-aset/pelihara/riwayat`;
+const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara/riwayat`;
 const ITEMS_PER_PAGE = 10;
 
 function RiwayatAset() {
@@ -42,7 +42,9 @@ function RiwayatAset() {
       );
       const { data, pagination } = response;
       setAssets(data);
-      setTotalPages(pagination.max_page);
+      if (pagination) {
+        setTotalPages(pagination.max_page);
+      }
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Error fetching data.", { variant: "error" });
