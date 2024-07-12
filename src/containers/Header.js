@@ -73,11 +73,14 @@ function Header() {
         </div>
         <div className="flex-none">
           <div className="dropdown dropdown-end ml-4">
-            <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full">
-                <img src={profileImageUrl} alt="profile" />
-              </div>
-            </label>
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-lg">{JSON.parse(localStorage.getItem('user'))?.nama_lengkap || ''}</h2>
+              <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+                <div className="w-10 rounded-full">
+                  <img src={profileImageUrl} alt="profile" />
+                </div>
+              </label>
+            </div>
             <ul
               tabIndex={0}
               className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"

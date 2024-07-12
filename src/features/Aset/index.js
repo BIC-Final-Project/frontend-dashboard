@@ -58,8 +58,6 @@ function DetailAset() {
   const [searchQuery, setSearchQuery] = useState("");
   const [vendor, setVendor] = useState(null);
 
-  console.log(editFormData);
-
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -353,11 +351,6 @@ function DetailAset() {
     return vendor ? vendor.nama_vendor : "Unknown Vendor";
   };
 
-  const paginatedAssets = filteredAssets.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   const handlePrint = () => {
     const doc = new jsPDF();
     const columns = [
@@ -371,7 +364,7 @@ function DetailAset() {
       { header: "Jumlah Aset", dataKey: "jumlahAset" },
     ];
 
-    const rows = paginatedAssets.map((asset) => ({
+    const rows = filteredAssets.map((asset) => ({
       fotoAset: {
         data: asset.gambar_aset.image_url,
         type: "image",
@@ -387,13 +380,17 @@ function DetailAset() {
       jumlahAset: asset.jumlah_aset,
     }));
 
+    const pageHeight = doc.internal.pageSize.height;
+    let cursorY = 10;
+
     doc.autoTable({
       head: [columns.map((col) => col.header)],
       body: rows.map((row) =>
         columns.map((col) =>
-          col.dataKey === "fotoAset"
+          
+          col.dataKey === "gambar_aset"
             ? {
-                ...row[col.dataKey],
+                ...row[col.dataKey.image_url],
                 cellWidth: "wrap",
                 minCellHeight: 20,
               }
@@ -402,22 +399,28 @@ function DetailAset() {
       ),
       didDrawCell: (data) => {
         if (
-          data.column.dataKey === "fotoAset" &&
+          data.column.dataKey === "gambar_aset" &&
           data.cell.section === "body"
         ) {
-          const { data: imageUrl, width, height } = data.cell.raw;
-          if (imageUrl) {
+          const { data: image_url, width, height } = data.cell.raw;
+          console.log(image_url);
+          if (image_url) {
+            const imgProps = doc.getImageProperties(image_url);
+            const imgHeight = (imgProps.height * width) / imgProps.width;
             doc.addImage(
-              imageUrl,
+              image_url,
               "JPEG",
               data.cell.x + 2,
               data.cell.y + 2,
               width,
-              height
+              imgHeight
             );
           }
         }
       },
+      startY: cursorY,
+      margin: { top: 10 },
+      rowPageBreak: "avoid",
     });
 
     doc.save("assets.pdf");
@@ -452,54 +455,61 @@ function DetailAset() {
               </tr>
             </thead>
             <tbody>
-              {paginatedAssets.map((asset) => (
-                <tr key={asset._id}>
-                  <td>
-                    <div className="avatar">
-                      <div className="mask mask-squircle w-12 h-12">
-                        <img
-                          src={
-                            asset.gambar_aset.image_url ||
-                            "https://via.placeholder.com/150"
-                          }
-                          alt="Foto Aset"
-                        />
+              {filteredAssets
+                .slice(
+                  (currentPage - 1) * ITEMS_PER_PAGE,
+                  currentPage * ITEMS_PER_PAGE
+                )
+                .map((asset) => (
+                  <tr key={asset._id}>
+                    <td>
+                      <div className="avatar">
+                        <div className="mask mask-squircle w-12 h-12">
+                          <img
+                            src={
+                              asset.gambar_aset.image_url ||
+                              "https://via.placeholder.com/150"
+                            }
+                            alt="Foto Aset"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>{asset.nama_aset}</td>
-                  <td>{moment(asset.aset_masuk).format("DD MMM YYYY")}</td>
-                  <td>{moment(asset.garansi_dimulai).format("DD MMM YYYY")}</td>
-                  <td>
-                    {moment(asset.garansi_berakhir).format("DD MMM YYYY")}
-                  </td>
-                  <td>{getVendorName(asset.vendor_id)}</td>
-                  <td className="whitespace-nowrap">{asset.kategori_aset}</td>
-                  <td className="whitespace-nowrap text-center">
-                    {asset.jumlah_aset}
-                  </td>
-                  <td className="flex justify-around items-center">
-                    <button
-                      className="btn btn-square btn-ghost text-red-500"
-                      onClick={() => handleDeleteAsset(asset._id)}
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost text-yellow-500"
-                      onClick={() => handleEditAsset(asset)}
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost text-black"
-                      onClick={() => handleViewAsset(asset)}
-                    >
-                      <EyeIcon className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>{asset.nama_aset}</td>
+                    <td>{moment(asset.aset_masuk).format("DD MMM YYYY")}</td>
+                    <td>
+                      {moment(asset.garansi_dimulai).format("DD MMM YYYY")}
+                    </td>
+                    <td>
+                      {moment(asset.garansi_berakhir).format("DD MMM YYYY")}
+                    </td>
+                    <td>{getVendorName(asset.vendor_id)}</td>
+                    <td className="whitespace-nowrap">{asset.kategori_aset}</td>
+                    <td className="whitespace-nowrap text-center">
+                      {asset.jumlah_aset}
+                    </td>
+                    <td className="flex justify-around items-center">
+                      <button
+                        className="btn btn-square btn-ghost text-red-500"
+                        onClick={() => handleDeleteAsset(asset._id)}
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        className="btn btn-square btn-ghost text-yellow-500"
+                        onClick={() => handleEditAsset(asset)}
+                      >
+                        <PencilIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        className="btn btn-square btn-ghost text-black"
+                        onClick={() => handleViewAsset(asset)}
+                      >
+                        <EyeIcon className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

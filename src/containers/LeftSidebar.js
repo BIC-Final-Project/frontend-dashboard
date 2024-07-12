@@ -5,10 +5,23 @@ import SidebarSubmenu from "./SidebarSubmenu";
 import XMarkIcon from "@heroicons/react/24/outline/XMarkIcon";
 import { useDispatch } from "react-redux";
 import logoPath from "../assets/icons/Logo.svg";
+import sidebarAset from "../routes/sidebarAset";
+import sidebar from "../routes/sidebar";
 
 function LeftSidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
+  const role = JSON.parse(localStorage.getItem("user"))?.role || "";
+
+  const setSidebarRole = () => {
+    if (role === "admin aset") {
+      return sidebarAset;
+    } else if (role === "admin operasional") {
+      return sidebar;
+    } else {
+      return sidebar;
+    }
+  };
 
   const close = (e) => {
     document.getElementById("left-sidebar-drawer").click();
@@ -45,7 +58,7 @@ function LeftSidebar() {
             />
           </Link>
         </li>
-        {routes.map((route, k) => (
+        {setSidebarRole().map((route, k) => (
           <li key={k}>
             {route.submenu ? (
               <SidebarSubmenu {...route} />

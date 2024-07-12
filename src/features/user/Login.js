@@ -39,13 +39,12 @@ function Login() {
         password: loginObj.password,
       });
 
-      console.log(response.data.token);
+      console.log(response.data);
 
-      const { token, refresh_token, data } = response.data;
+      const { token, data } = response.data;
 
       // Simpan token dan data pengguna di localStorage
       localStorage.setItem("access_token", token);
-      localStorage.setItem("refresh_token", refresh_token);
       localStorage.setItem("user", JSON.stringify(data));
 
       setLoading(false);
