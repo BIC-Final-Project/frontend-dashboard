@@ -34,6 +34,7 @@ function DetailVendor() {
     jenis_vendor: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   useEffect(() => {
     fetchVendors();
@@ -44,6 +45,7 @@ function DetailVendor() {
   }, [searchQuery]);
 
   const fetchVendors = async () => {
+    setIsLoading(true); // Start loading
     try {
       const response = await fetchData(
         `${BASE_URL_API}api/v1/manage-aset/vendor`
@@ -66,6 +68,7 @@ function DetailVendor() {
     } catch (error) {
       console.error("Axios error:", error.message);
     }
+    setIsLoading(false); // End loading
   };
 
   const filterVendors = () => {
@@ -196,43 +199,49 @@ function DetailVendor() {
           />
           <Button label="Cetak Data" onClick={handlePrint} className="ml-2" />
         </div>
-        <div className="overflow-x-auto w-full">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>Nama Vendor</th>
-                <th>No Tlp Vendor</th>
-                <th>Alamat</th>
-                <th>Jenis Vendor</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedVendors.map((vendor) => (
-                <tr key={vendor._id}>
-                  <td>{vendor.nama_vendor}</td>
-                  <td>{vendor.telp_vendor}</td>
-                  <td>{vendor.alamat_vendor}</td>
-                  <td>{vendor.jenis_vendor}</td>
-                  <td>
-                    <button
-                      className="btn btn-square btn-ghost"
-                      onClick={() => handleDeleteVendor(vendor._id)}
-                    >
-                      <TrashIcon className="w-5 h-5 text-red-500" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost"
-                      onClick={() => handleEditVendor(vendor)}
-                    >
-                      <PencilIcon className="w-5 h-5 text-yellow-500" />
-                    </button>
-                  </td>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-48">
+            <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-green-500"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto w-full">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Nama Vendor</th>
+                  <th>No Tlp Vendor</th>
+                  <th>Alamat</th>
+                  <th>Jenis Vendor</th>
+                  <th>Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {paginatedVendors.map((vendor) => (
+                  <tr key={vendor._id}>
+                    <td>{vendor.nama_vendor}</td>
+                    <td>{vendor.telp_vendor}</td>
+                    <td>{vendor.alamat_vendor}</td>
+                    <td>{vendor.jenis_vendor}</td>
+                    <td>
+                      <button
+                        className="btn btn-square btn-ghost"
+                        onClick={() => handleDeleteVendor(vendor._id)}
+                      >
+                        <TrashIcon className="w-5 h-5 text-red-500" />
+                      </button>
+                      <button
+                        className="btn btn-square btn-ghost"
+                        onClick={() => handleEditVendor(vendor)}
+                      >
+                        <PencilIcon className="w-5 h-5 text-yellow-500" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         <div className="flex justify-between items-center mt-4">
           <div>
             <button

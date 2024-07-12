@@ -44,7 +44,7 @@ function Login() {
       const { token, data } = response.data;
 
       // Simpan token dan data pengguna di localStorage
-      localStorage.setItem("access_token", token);
+      localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(data));
 
       setLoading(false);

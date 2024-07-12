@@ -76,12 +76,8 @@ function PemeliharaanAset() {
 
   const fetchAssets = async () => {
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(API_URL);
       const dataDarurat = response.data_darurat
         ? response.data_darurat.map((item) => ({
             ...item,
@@ -133,12 +129,8 @@ function PemeliharaanAset() {
 
   const fetchRencanaData = async () => {
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(RENCANA_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(RENCANA_URL);
       setRencanaData(response.data);
     } catch (error) {
       console.error("Fetching rencana error:", error.message);
@@ -148,12 +140,8 @@ function PemeliharaanAset() {
 
   const fetchVendorData = async () => {
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(VENDOR_API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(VENDOR_API_URL);
       setVendorList(response.data);
     } catch (error) {
       console.error("Fetching vendor error:", error.message);
@@ -163,12 +151,8 @@ function PemeliharaanAset() {
 
   const fetchAdminData = async () => {
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(ADMIN_API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(ADMIN_API_URL);
       setAdminList(response.data);
     } catch (error) {
       console.error("Fetching admin error:", error.message);
@@ -178,12 +162,8 @@ function PemeliharaanAset() {
 
   const fetchRencanaById = async (rencana_id) => {
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(`${RENCANA_URL}/${rencana_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(`${RENCANA_URL}/${rencana_id}`);
       return response.data;
     } catch (error) {
       console.error("Fetching rencana error:", error.message);
@@ -195,12 +175,8 @@ function PemeliharaanAset() {
   const fetchAssetById = async (id, status, viewOnly = false) => {
     const url = status === "Data Darurat" ? DARURAT_URL : API_URL;
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      const response = await fetchData(`${url}/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      const response = await fetchData(`${url}/${id}`);
       const data = response.data;
       console.log("Fetched data:", data);
 
@@ -323,12 +299,8 @@ function PemeliharaanAset() {
   const confirmDelete = async () => {
     const url = modal.status === "Data Darurat" ? DARURAT_URL : API_URL;
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
-      await deleteData(`${url}/${modal.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Ensure you have the token
+      await deleteData(`${url}/${modal.id}`);
       setAssets(assets.filter((asset) => asset._id !== modal.id));
       enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
     } catch (error) {
@@ -389,16 +361,12 @@ function PemeliharaanAset() {
     };
     console.log("Payload data:", payload);
     try {
-      const token = localStorage.getItem("token"); // Ensure you have the token
+      // Ensure you have the token
       const url =
         editFormData.status === "Data Darurat"
           ? `${DARURAT_URL}/${editFormData.asset_id}`
           : `${API_URL}/${editFormData.asset_id}`;
-      const response = await updateData(url, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await updateData(url, payload);
       console.log("Response data:", response);
       fetchAssets();
       enqueueSnackbar("Data berhasil diperbarui!", { variant: "success" });

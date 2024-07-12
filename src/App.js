@@ -1,4 +1,4 @@
-import React, { lazy, useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -9,7 +9,8 @@ import {
 import { themeChange } from "theme-change";
 import checkAuth from "./app/auth";
 import initializeApp from "./app/init";
-import PrivateLayout from "./components/Layout/PriveteLayout";
+import PrivateLayout from "./components/Layout/PrivateLayout";
+import SuspenseContent from "./containers/SuspenseContent";
 
 // Importing pages
 const Layout = lazy(() => import("./containers/Layout"));
@@ -35,18 +36,23 @@ function App() {
   return (
     <>
       <Router>
-        <Routes>
-          <Route path="/login" index element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/documentation" element={<Documentation />} />
+        <Suspense fallback={<SuspenseContent />}>
+          <Routes>
+            <Route path="/login" index element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/documentation" element={<Documentation />} />
 
-          {/* Place new routes over this */}
-          <Route element={<PrivateLayout />}>
-            <Route path="/app/*" element={<Layout />} />
-          </Route>
+            {/* Place new routes over this */}
+            <Route element={<PrivateLayout />}>
+              <Route path="/app/*" element={<Layout />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
-        </Routes>
+            <Route
+              path="*"
+              element={<Navigate to="/app/dashboard" replace />}
+            />
+          </Routes>
+        </Suspense>
       </Router>
     </>
   );
