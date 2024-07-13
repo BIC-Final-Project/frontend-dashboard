@@ -25,24 +25,24 @@ const getTagStyle = (status) => {
 
 const tagStyles = {
   "Dapat digunakan": {
-    backgroundColor: "rgba(23, 162, 97, 0.2)",
+    backgroundColor: "rgba(160 254 208)",
     color: "black",
   },
   "Dalam perbaikan": {
-    backgroundColor: "rgba(29, 35, 42, 0.2)",
+    backgroundColor: "rgba(255 233 158)",
     color: "black",
   },
   "Tidak dapat diperbaiki": {
-    backgroundColor: "rgba(241, 68, 55, 0.2)",
+    backgroundColor: "rgba(255 177 169)",
     color: "black",
   },
-  Selesai: { backgroundColor: "rgba(23, 162, 97, 0.2)", color: "black" },
+  Selesai: { backgroundColor: "rgba(160 254 208)", color: "black" },
   "Sedang berlangsung": {
-    backgroundColor: "rgba(29, 35, 42, 0.2)",
+    backgroundColor: "rgba(255 233 158)",
     color: "black",
   },
   "Perbaikan gagal": {
-    backgroundColor: "rgba(241, 68, 55, 0.2)",
+    backgroundColor: "rgba(255 177 169)",
     color: "black",
   },
 };

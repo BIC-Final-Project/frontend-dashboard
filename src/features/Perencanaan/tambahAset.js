@@ -210,7 +210,7 @@ function TambahAset() {
                 name="usiaAsetSaatIni"
                 value={formData.usiaAsetSaatIni}
                 onChange={handleInputChange}
-                placeholder="Masukkan usia aset saat ini"
+                placeholder="Masukkan usia aset saat ini (Tahun)"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>
@@ -224,7 +224,7 @@ function TambahAset() {
                 name="maksimalUsiaAset"
                 value={formData.maksimalUsiaAset}
                 onChange={handleInputChange}
-                placeholder="Masukkan maksimal usia aset"
+                placeholder="Masukkan maksimal usia aset (Tahun)"
                 className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
               />
             </div>

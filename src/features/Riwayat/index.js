@@ -16,6 +16,34 @@ import "jspdf-autotable";
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara/riwayat`;
 const ITEMS_PER_PAGE = 10;
 
+const tagStyles = {
+  "Dapat digunakan": {
+    backgroundColor: "rgba(160 254 208)",
+    color: "black",
+  },
+  "Dalam perbaikan": {
+    backgroundColor: "rgba(255 233 158)",
+    color: "black",
+  },
+  "Tidak dapat diperbaiki": {
+    backgroundColor: "rgba(255 177 169)",
+    color: "black",
+  },
+  Selesai: { backgroundColor: "rgba(160 254 208)", color: "black" },
+  "Sedang berlangsung": {
+    backgroundColor: "rgba(255 233 158)",
+    color: "black",
+  },
+  "Perbaikan gagal": {
+    backgroundColor: "rgba(255 177 169)",
+    color: "black",
+  },
+};
+
+const getTagStyle = (status) => {
+  return tagStyles[status] || {};
+};
+
 function RiwayatAset() {
   const [assets, setAssets] = useState([]);
   const [filteredAssets, setFilteredAssets] = useState([]);
@@ -224,8 +252,30 @@ function RiwayatAset() {
                       {adminList.find((admin) => admin._id === asset.admin_id)
                         ?.nama_lengkap || "N/A"}
                     </td>
-                    <td>{asset.kondisi_stlh_perbaikan || "N/A"}</td>
-                    <td>{asset.status_pemeliharaan || "N/A"}</td>
+                    <td>
+                      <span
+                        style={{
+                          ...getTagStyle(asset.kondisi_stlh_perbaikan),
+                          display: "inline-block",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {asset.kondisi_stlh_perbaikan || "N/A"}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          ...getTagStyle(asset.status_pemeliharaan),
+                          display: "inline-block",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {asset.status_pemeliharaan || "N/A"}
+                      </span>
+                    </td>
                     <td>
                       <button
                         className="btn btn-square btn-ghost"
@@ -376,7 +426,7 @@ function RiwayatAset() {
                   name="usiaAsetSaatIni"
                   value={selectedAsset?.perencanaan.usia_aset || ""}
                   onChange={() => {}}
-                  placeholder="Masukkan usia aset saat ini"
+                  placeholder="Masukkan usia aset saat ini (Tahun)"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
                 />
@@ -391,7 +441,7 @@ function RiwayatAset() {
                   name="maksimalUsiaAset"
                   value={selectedAsset?.perencanaan.maks_usia_aset || ""}
                   onChange={() => {}}
-                  placeholder="Masukkan maksimal usia aset"
+                  placeholder="Masukkan maksimal usia aset (Tahun)"
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
                 />

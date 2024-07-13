@@ -306,13 +306,13 @@ function DesignAset() {
   };
 
   const tagStyles = {
-    Disetujui: { backgroundColor: "rgba(23, 162, 97, 0.2)", color: "black" },
+    Disetujui: { backgroundColor: "rgba(160 254 208)", color: "black" },
     "Dalam Proses": {
-      backgroundColor: "rgba(29, 35, 42, 0.2)",
+      backgroundColor: "rgba(255 233 158)",
       color: "black",
     },
     "Tidak Diperbaiki": {
-      backgroundColor: "rgba(241, 68, 55, 0.2)",
+      backgroundColor: "rgba(255 177 169)",
       color: "black",
     },
   };
@@ -509,7 +509,7 @@ function DesignAset() {
                     name="usiaAsetSaatIni"
                     value={editFormData.usiaAsetSaatIni}
                     onChange={handleInputChange}
-                    placeholder="Masukkan usia aset saat ini"
+                    placeholder="Masukkan usia aset saat ini (Tahun)"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
@@ -526,7 +526,7 @@ function DesignAset() {
                     name="maksimalUsiaAset"
                     value={editFormData.maksimalUsiaAset}
                     onChange={handleInputChange}
-                    placeholder="Masukkan maksimal usia aset"
+                    placeholder="Masukkan maksimal usia aset (Tahun)"
                     className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   />
                 </div>
