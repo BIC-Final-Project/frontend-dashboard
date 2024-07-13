@@ -1,45 +1,79 @@
-import TitleCard from "../../../components/Cards/TitleCard"
+import React, { useState, useEffect } from "react";
+import { useSnackbar } from "notistack";
+import TitleCard from "../../../components/Cards/TitleCard";
+import { fetchData } from "../../../utils/utils";
+import BASE_URL_API from "../../../config";
 
-const userSourceData = [
-    {source : "Facebook Ads", count : "26,345", conversionPercent : 10.2},
-    {source : "Google Ads", count : "21,341", conversionPercent : 11.7},
-    {source : "Instagram Ads", count : "34,379", conversionPercent : 12.4},
-    {source : "Affiliates", count : "12,359", conversionPercent : 20.9},
-    {source : "Organic", count : "10,345", conversionPercent : 10.3},
-]
+const API_URL = `${BASE_URL_API}api/v1/manage-aset/admin`;
 
-function UserChannels(){
-    return(
-        <TitleCard title={"User Signup Source"}>
-             {/** Table Data */}
-             <div className="overflow-x-auto">
-                <table className="table w-full">
-                    <thead>
-                    <tr>
-                        <th></th>
-                        <th className="normal-case">Source</th>
-                        <th className="normal-case">No of Users</th>
-                        <th className="normal-case">Conversion</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            userSourceData.map((u, k) => {
-                                return(
-                                    <tr key={k}>
-                                        <th>{k+1}</th>
-                                        <td>{u.source}</td>
-                                        <td>{u.count}</td>
-                                        <td>{`${u.conversionPercent}%`}</td>
-                                    </tr>
-                                )
-                            })
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </TitleCard>
-    )
+function UserChannels() {
+  const [users, setUsers] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetchData(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const { data } = response;
+      setUsers(data);
+    } catch (error) {
+      console.error("Fetching error:", error.message);
+      enqueueSnackbar("Gagal memuat data pengguna.", { variant: "error" });
+    }
+  };
+
+  return (
+    <TitleCard title={"Karyawan Batununggal Indah Club"}>
+      <div className="overflow-x-auto">
+        <table className="table w-full border-collapse border border-gray-200">
+          <thead>
+            <tr>
+              <th className="border border-gray-200 px-4 py-2 text-center">
+                No
+              </th>
+              <th className="border border-gray-200 px-4 py-2">Nama Lengkap</th>
+              <th className="border border-gray-200 px-4 py-2">Email</th>
+              <th className="border border-gray-200 px-4 py-2">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length > 0 ? (
+              users.map((user, index) => (
+                <tr key={user._id}>
+                  <td className="border border-gray-200 px-4 py-2 text-center">
+                    {index + 1}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2">
+                    {user.nama_lengkap}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2">
+                    {user.email}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-2">
+                    {user.role}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="text-center py-4">
+                  Tidak ada data pengguna.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </TitleCard>
+  );
 }
 
-export default UserChannels
+export default UserChannels;

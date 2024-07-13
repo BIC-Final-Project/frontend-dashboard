@@ -127,6 +127,7 @@ function PemeliharaanAset() {
       allAssets.sort(
         (a, b) => new Date(b.tgl_dilakukan) - new Date(a.tgl_dilakukan)
       );
+      allAssets.reverse(); // Ensures latest data is at the top
       const filteredAssets = allAssets.filter(
         (asset) =>
           (filterStatus === "All" || asset.status === filterStatus) &&

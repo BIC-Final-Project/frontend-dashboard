@@ -272,9 +272,9 @@ function DesignAset() {
         });
         enqueueSnackbar("Aset berhasil ditambahkan.", { variant: "success" });
 
-        // Tambahkan data baru di bagian atas array assets
-        setAssets([response.data.data, ...assets]);
-        setOriginalAssets([response.data.data, ...originalAssets]);
+        // Tambahkan data baru di bagian bawah array assets
+        setAssets([...assets, response.data.data]);
+        setOriginalAssets([...originalAssets, response.data.data]);
       }
 
       fetchAssets();
