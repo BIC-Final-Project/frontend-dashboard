@@ -38,7 +38,6 @@ function TambahAset() {
   const [vendorList, setVendorList] = useState([]);
   const [adminList, setAdminList] = useState([]);
   const [selectedRencana, setSelectedRencana] = useState(null);
-  const [isVendorSelected, setIsVendorSelected] = useState(false);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -77,13 +76,11 @@ function TambahAset() {
           ...prev,
           infoVendor: selectedVendor.telp_vendor,
         }));
-        setIsVendorSelected(true);
       } else {
         setFormData((prev) => ({
           ...prev,
           infoVendor: "",
         }));
-        setIsVendorSelected(false);
       }
     }
   };
@@ -118,7 +115,6 @@ function TambahAset() {
         kondisi_stlh_perbaikan: "",
         pengawas: "",
       });
-      setIsVendorSelected(true);
     }
   };
 
@@ -325,23 +321,21 @@ function TambahAset() {
                   ))}
                 </select>
               </div>
-              {isVendorSelected && (
-                <div>
-                  <label htmlFor="infoVendor" className="block font-medium">
-                    Informasi Vendor / No Telepon
-                  </label>
-                  <input
-                    type="text"
-                    id="infoVendor"
-                    name="infoVendor"
-                    value={formData.infoVendor}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan informasi vendor"
-                    className={getInputClassName(!!formData.infoVendor)}
-                    disabled={true}
-                  />
-                </div>
-              )}
+              <div>
+                <label htmlFor="infoVendor" className="block font-medium">
+                  Informasi Vendor / No Telepon
+                </label>
+                <input
+                  type="text"
+                  id="infoVendor"
+                  name="infoVendor"
+                  value={formData.infoVendor}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan informasi vendor"
+                  className={getInputClassName(!!formData.infoVendor)}
+                  disabled={true}
+                />
+              </div>
             </div>
           </CardInput>
 
