@@ -22,6 +22,7 @@ const ITEMS_PER_PAGE = 10;
 function DesignAset() {
   const [assets, setAssets] = useState([]);
   const [allAssets, setAllAssets] = useState([]);
+  const [originalAssets, setOriginalAssets] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -33,6 +34,8 @@ function DesignAset() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const role = JSON.parse(localStorage.getItem("user"));
+
   const [editFormData, setEditFormData] = useState({
     nama_aset: "",
     aset_id: "",
@@ -60,6 +63,7 @@ function DesignAset() {
   });
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
     fetchVendors();
@@ -69,7 +73,7 @@ function DesignAset() {
 
   useEffect(() => {
     applySearch();
-  }, [searchQuery]);
+  }, [searchQuery, statusFilter]);
 
   const fetchVendors = async () => {
     try {
@@ -98,49 +102,39 @@ function DesignAset() {
         aset_id: item.aset._id,
         nama_vendor: item.vendor.nama_vendor,
         tahun_produksi: item.aset.tahun_produksi,
+        tgl_perencanaan: item.tgl_perencanaan,
+        created_at: item.created_at,
       }));
-      setAssets(result.reverse());
+
+      // Sort by created_at descending
+      result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      setAssets(result);
+      setOriginalAssets(result);
       setTotalPages(Math.ceil(result.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
-      loadDummyData();
     }
-  };
-
-  const loadDummyData = () => {
-    const dummyAssets = [
-      {
-        _id: 1,
-        nama_aset: "Laptop HP",
-        tgl_perencanaan: "2023-05-01",
-        vendor_id: "1",
-        kondisi_aset: "Baik",
-        usia_aset: "2 Bulan",
-        status_aset: "Aktif",
-      },
-      {
-        _id: 2,
-        nama_aset: "Printer Epson",
-        tgl_perencanaan: "2023-04-15",
-        vendor_id: "2",
-        kondisi_aset: "Perlu Perbaikan",
-        usia_aset: "4 Bulan",
-        status_aset: "Non-Aktif",
-      },
-    ];
-    setAssets(dummyAssets);
-    setTotalPages(1);
   };
 
   const applySearch = () => {
-    if (searchQuery === "") {
-      fetchAssets();
-      return;
+    let filteredAssets = originalAssets;
+
+    if (searchQuery !== "") {
+      filteredAssets = filteredAssets.filter((asset) => {
+        return (
+          asset.nama_aset &&
+          asset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      });
     }
 
-    const filteredAssets = assets.filter((asset) =>
-      asset.nama_aset.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    if (statusFilter !== "") {
+      filteredAssets = filteredAssets.filter((asset) => {
+        return asset.status_aset === statusFilter;
+      });
+    }
+
     setAssets(filteredAssets);
     setTotalPages(Math.ceil(filteredAssets.length / ITEMS_PER_PAGE));
     setCurrentPage(1);
@@ -260,21 +254,34 @@ function DesignAset() {
         usia_aset: editFormData.usiaAsetSaatIni,
         maks_usia_aset: editFormData.maksimalUsiaAset,
         deskripsi: editFormData.deskripsiKerusakan,
+        created_at: new Date(), // Tambahkan properti created_at
       };
 
-      await axios.put(`${API_URL}/${editFormData._id}`, requestData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      if (editFormData._id) {
+        await axios.put(`${API_URL}/${editFormData._id}`, requestData, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
+      } else {
+        const response = await axios.post(API_URL, requestData, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        enqueueSnackbar("Aset berhasil ditambahkan.", { variant: "success" });
+
+        // Tambahkan data baru di bagian atas array assets
+        setAssets([response.data.data, ...assets]);
+        setOriginalAssets([response.data.data, ...originalAssets]);
+      }
 
       fetchAssets();
-
-      enqueueSnackbar("Aset berhasil diperbarui.", { variant: "success" });
       closeEditModal();
     } catch (error) {
-      console.error("Error updating asset:", error);
-      enqueueSnackbar("Gagal memperbarui aset.", { variant: "error" });
+      console.error("Error saving asset:", error);
+      enqueueSnackbar("Gagal menyimpan aset.", { variant: "error" });
     }
   };
 
@@ -288,10 +295,30 @@ function DesignAset() {
     setSearchQuery(event.target.value);
   };
 
+  const handleStatusFilterChange = (event) => {
+    setStatusFilter(event.target.value);
+  };
+
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
+  };
+
+  const tagStyles = {
+    Disetujui: { backgroundColor: "rgba(23, 162, 97, 0.2)", color: "black" },
+    "Dalam Proses": {
+      backgroundColor: "rgba(29, 35, 42, 0.2)",
+      color: "black",
+    },
+    "Tidak Diperbaiki": {
+      backgroundColor: "rgba(241, 68, 55, 0.2)",
+      color: "black",
+    },
+  };
+
+  const getTagStyle = (status) => {
+    return tagStyles[status] || {};
   };
 
   const paginatedAssets = assets.slice(
@@ -302,7 +329,7 @@ function DesignAset() {
   return (
     <>
       <TitleCard title="Detail Perencanaan Aset" topMargin="mt-2">
-        <div className="mb-10">
+        <div className="mb-10 flex gap-4">
           <input
             type="text"
             placeholder="Cari aset..."
@@ -310,53 +337,85 @@ function DesignAset() {
             value={searchQuery}
             onChange={handleSearchChange}
           />
+          <select
+            className="input input-bordered w-full max-w-xs"
+            value={statusFilter}
+            onChange={handleStatusFilterChange}
+          >
+            <option value="">Pilih Status</option>
+            <option value="Disetujui">Disetujui</option>
+            <option value="Dalam Proses">Dalam Proses</option>
+            <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
+          </select>
         </div>
         <div className="overflow-x-auto w-full">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>Nama Aset</th>
-                <th>Tanggal Perancangan</th>
-                <th>Vendor Pengelola</th>
-                <th>Kondisi Aset</th>
-                <th>Usia Aset</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedAssets.map((asset) => (
-                <tr key={asset._id}>
-                  <td>{asset.nama_aset}</td>
-                  <td>{moment(asset.tgl_perencanaan).format("DD MMM YYYY")}</td>
-                  <td>{asset.nama_vendor}</td>
-                  <td>{asset.kondisi_aset}</td>
-                  <td>{asset.usia_aset}</td>
-                  <td>{asset.status_aset}</td>
-                  <td>
-                    <button
-                      className="btn btn-square btn-ghost text-red-500"
-                      onClick={() => handleDeleteAsset(asset._id)}
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost text-yellow-500"
-                      onClick={() => handleEditAsset(asset)}
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost text-black"
-                      onClick={() => handleViewAsset(asset)}
-                    >
-                      <EyeIcon className="w-5 h-5" />
-                    </button>
-                  </td>
+          {paginatedAssets.length === 0 ? (
+            <div className="text-center p-4">
+              Tidak ada data perencanaan yang ditemukan.
+            </div>
+          ) : (
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Nama Aset</th>
+                  <th>Tanggal Perancangan</th>
+                  <th>Vendor Pengelola</th>
+                  <th>Kondisi Aset</th>
+                  <th>Usia Aset</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedAssets.map((asset) => (
+                  <tr key={asset._id}>
+                    <td>{asset.nama_aset}</td>
+                    <td>
+                      {moment(asset.tgl_perencanaan).format("DD MMM YYYY")}
+                    </td>
+                    <td>{asset.nama_vendor}</td>
+                    <td>{asset.kondisi_aset}</td>
+                    <td>{asset.usia_aset}</td>
+                    <td>
+                      <span
+                        style={{
+                          ...getTagStyle(asset.status_aset),
+                          display: "inline-block",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {asset.status_aset}
+                      </span>
+                    </td>
+                    <td>
+                      {role.role !== "admin aset" && (
+                        <button
+                          className="btn btn-square btn-ghost text-red-500"
+                          onClick={() => handleDeleteAsset(asset._id)}
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-square btn-ghost text-yellow-500"
+                        onClick={() => handleEditAsset(asset)}
+                      >
+                        <PencilIcon className="w-5 h-5" />
+                      </button>
+
+                      <button
+                        className="btn btn-square btn-ghost text-black"
+                        onClick={() => handleViewAsset(asset)}
+                      >
+                        <EyeIcon className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
         <div className="flex justify-between items-center mt-4">
           <div>
@@ -519,26 +578,28 @@ function DesignAset() {
                     wrapperClassName="date-picker"
                   />
                 </div>
-                <div>
-                  <label
-                    htmlFor="statusPerencanaan"
-                    className="block font-medium"
-                  >
-                    Status Perencanaan *
-                  </label>
-                  <select
-                    id="statusPerencanaan"
-                    name="statusPerencanaan"
-                    value={editFormData.statusPerencanaan}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  >
-                    <option>Pilih status perencanaan</option>
-                    <option value="Disetujui">Disetujui</option>
-                    <option value="Dalam Proses">Dalam Proses</option>
-                    <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
-                  </select>
-                </div>
+                {role.role === "super admin" && (
+                  <div>
+                    <label
+                      htmlFor="statusPerencanaan"
+                      className="block font-medium"
+                    >
+                      Status Perencanaan *
+                    </label>
+                    <select
+                      id="statusPerencanaan"
+                      name="statusPerencanaan"
+                      value={editFormData.statusPerencanaan}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    >
+                      <option>Pilih status perencanaan</option>
+                      <option value="Disetujui">Disetujui</option>
+                      <option value="Dalam Proses">Dalam Proses</option>
+                      <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </CardInput>
 
@@ -598,8 +659,8 @@ function DesignAset() {
           className="modal-box relative max-w-4xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <CardInput title="Detail Aset">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardInput title="Identitas Aset">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="view_nama_aset" className="block font-medium">
                   Nama Aset
@@ -626,6 +687,11 @@ function DesignAset() {
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 />
               </div>
+            </div>
+          </CardInput>
+
+          <CardInput title="Detail Aset" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label
                   htmlFor="view_usiaAsetSaatIni"
@@ -724,6 +790,11 @@ function DesignAset() {
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                 />
               </div>
+            </div>
+          </CardInput>
+
+          <CardInput title="Informasi Vendor" className="mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label
                   htmlFor="view_vendorPengelola"

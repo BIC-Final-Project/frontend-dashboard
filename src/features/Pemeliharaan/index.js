@@ -14,11 +14,38 @@ import BASE_URL_API from "../../config";
 import { fetchData, updateData, deleteData } from "../../utils/utils";
 
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
-const DARURAT_URL = `${BASE_URL_API}api/v1/manage-aset/darurat`;
 const RENCANA_URL = `${BASE_URL_API}api/v1/manage-aset/rencana`;
 const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
 const ADMIN_API_URL = `${BASE_URL_API}api/v1/manage-aset/admin`;
 const ITEMS_PER_PAGE = 10;
+
+const getTagStyle = (status) => {
+  return tagStyles[status] || {};
+};
+
+const tagStyles = {
+  "Dapat digunakan": {
+    backgroundColor: "rgba(23, 162, 97, 0.2)",
+    color: "black",
+  },
+  "Dalam perbaikan": {
+    backgroundColor: "rgba(29, 35, 42, 0.2)",
+    color: "black",
+  },
+  "Tidak dapat diperbaiki": {
+    backgroundColor: "rgba(241, 68, 55, 0.2)",
+    color: "black",
+  },
+  Selesai: { backgroundColor: "rgba(23, 162, 97, 0.2)", color: "black" },
+  "Sedang berlangsung": {
+    backgroundColor: "rgba(29, 35, 42, 0.2)",
+    color: "black",
+  },
+  "Perbaikan gagal": {
+    backgroundColor: "rgba(241, 68, 55, 0.2)",
+    color: "black",
+  },
+};
 
 function PemeliharaanAset() {
   const [assets, setAssets] = useState([]);
@@ -36,8 +63,10 @@ function PemeliharaanAset() {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const role = JSON.parse(localStorage.getItem("user"));
+
   const [editFormData, setEditFormData] = useState({
-    asset_id: "", // Added to track current asset ID
+    asset_id: "",
     rencana_id: "",
     kondisi_stlh_perbaikan: "",
     status_pemeliharaan: "",
@@ -60,7 +89,7 @@ function PemeliharaanAset() {
     aset_masuk: "",
     garansi_dimulai: "",
     garansi_berakhir: "",
-    gambar_aset: "", // Added to handle asset image
+    gambar_aset: "",
     status: "",
   });
   const { enqueueSnackbar } = useSnackbar();
@@ -72,12 +101,16 @@ function PemeliharaanAset() {
     fetchRencanaData();
     fetchVendorData();
     fetchAdminData();
-  }, [searchQuery, filterStatus]); // Add dependencies
+  }, [searchQuery, filterStatus]);
 
   const fetchAssets = async () => {
     try {
-      // Ensure you have the token
-      const response = await fetchData(API_URL);
+      const token = localStorage.getItem("token");
+      const response = await fetchData(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const dataDarurat = response.data_darurat
         ? response.data_darurat.map((item) => ({
             ...item,
@@ -129,8 +162,12 @@ function PemeliharaanAset() {
 
   const fetchRencanaData = async () => {
     try {
-      // Ensure you have the token
-      const response = await fetchData(RENCANA_URL);
+      const token = localStorage.getItem("token");
+      const response = await fetchData(RENCANA_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setRencanaData(response.data);
     } catch (error) {
       console.error("Fetching rencana error:", error.message);
@@ -140,8 +177,12 @@ function PemeliharaanAset() {
 
   const fetchVendorData = async () => {
     try {
-      // Ensure you have the token
-      const response = await fetchData(VENDOR_API_URL);
+      const token = localStorage.getItem("token");
+      const response = await fetchData(VENDOR_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setVendorList(response.data);
     } catch (error) {
       console.error("Fetching vendor error:", error.message);
@@ -151,8 +192,12 @@ function PemeliharaanAset() {
 
   const fetchAdminData = async () => {
     try {
-      // Ensure you have the token
-      const response = await fetchData(ADMIN_API_URL);
+      const token = localStorage.getItem("token");
+      const response = await fetchData(ADMIN_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setAdminList(response.data);
     } catch (error) {
       console.error("Fetching admin error:", error.message);
@@ -162,8 +207,12 @@ function PemeliharaanAset() {
 
   const fetchRencanaById = async (rencana_id) => {
     try {
-      // Ensure you have the token
-      const response = await fetchData(`${RENCANA_URL}/${rencana_id}`);
+      const token = localStorage.getItem("token");
+      const response = await fetchData(`${RENCANA_URL}/${rencana_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error("Fetching rencana error:", error.message);
@@ -173,66 +222,79 @@ function PemeliharaanAset() {
   };
 
   const fetchAssetById = async (id, status, viewOnly = false) => {
-    const url = status === "Data Darurat" ? DARURAT_URL : API_URL;
     try {
-      // Ensure you have the token
-      const response = await fetchData(`${url}/${id}`);
+      const token = localStorage.getItem("token");
+      const url =
+        status === "Data Darurat"
+          ? `${BASE_URL_API}api/v1/manage-aset/darurat/${id}`
+          : `${API_URL}/${id}`;
+      const response = await fetchData(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = response.data;
       console.log("Fetched data:", data);
 
-      if (status === "Data Pemeliharaan") {
-        const rencanaData = await fetchRencanaById(data.rencana_id);
+      const rencanaData = data.rencana_id
+        ? await fetchRencanaById(data.rencana_id)
+        : null;
 
+      if (status === "Data Pemeliharaan") {
         setEditFormData({
-          asset_id: data._id, // Set asset ID for later use
+          asset_id: data._id,
           rencana_id: data.rencana_id || "",
           kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
           status_pemeliharaan: data.status_pemeliharaan || "",
-          penanggung_jawab: data.penanggung_jawab || "",
-          pengawas: data.admin ? data.admin.nama_lengkap : "",
+          penanggung_jawab: data.admin._id || "",
+          pengawas:
+            adminList.find((admin) => admin._id === data.penanggung_jawab)
+              ?.nama_lengkap || data.penanggung_jawab,
           deskripsi_pemeliharaan: data.deskripsi || "",
-          deskripsi_kerusakan: rencanaData.deskripsi || "",
+          deskripsi_kerusakan: rencanaData ? rencanaData.deskripsi : "",
           tgl_dilakukan: data.tgl_dilakukan
             ? moment(data.tgl_dilakukan).toDate()
             : new Date(),
           waktu_pemeliharaan: data.waktu_pemeliharaan || "",
-          usia_aset_saat_ini: rencanaData.usia_aset || "",
-          maksimal_usia_aset: rencanaData.maks_usia_aset || "",
-          tahun_produksi: rencanaData.aset.tahun_produksi || "",
-          vendor_pengelola: rencanaData.vendor.nama_vendor || "",
-          info_vendor: rencanaData.vendor.telp_vendor || "",
-          nama_aset: rencanaData.aset.nama_aset || "",
-          kategori_aset: rencanaData.aset.kategori_aset || "",
-          merek_aset: rencanaData.aset.merek_aset || "",
-          kode_produksi: rencanaData.aset.kode_produksi || "",
-          jumlah_aset: rencanaData.aset.jumlah_aset || "",
-          aset_masuk: rencanaData.aset.aset_masuk
+          usia_aset_saat_ini: rencanaData ? rencanaData.usia_aset : "",
+          maksimal_usia_aset: rencanaData ? rencanaData.maks_usia_aset : "",
+          tahun_produksi: rencanaData ? rencanaData.aset.tahun_produksi : "",
+          vendor_pengelola: rencanaData ? rencanaData.vendor.nama_vendor : "",
+          info_vendor: rencanaData ? rencanaData.vendor.telp_vendor : "",
+          nama_aset: rencanaData ? rencanaData.aset.nama_aset : "",
+          kategori_aset: rencanaData ? rencanaData.aset.kategori_aset : "",
+          merek_aset: rencanaData ? rencanaData.aset.merek_aset : "",
+          kode_produksi: rencanaData ? rencanaData.aset.kode_produksi : "",
+          jumlah_aset: rencanaData ? rencanaData.aset.jumlah_aset : "",
+          aset_masuk: rencanaData
             ? moment(rencanaData.aset.aset_masuk).toDate()
             : new Date(),
-          garansi_dimulai: rencanaData.aset.garansi_dimulai
+          garansi_dimulai: rencanaData
             ? moment(rencanaData.aset.garansi_dimulai).toDate()
             : new Date(),
-          garansi_berakhir: rencanaData.aset.garansi_berakhir
+          garansi_berakhir: rencanaData
             ? moment(rencanaData.aset.garansi_berakhir).toDate()
             : new Date(),
-          status, // simpan status data
+          status,
         });
       } else if (status === "Data Darurat") {
         setEditFormData({
-          asset_id: data._id, // Set asset ID for later use
+          asset_id: data._id,
           rencana_id: data.rencana_id || "",
           kondisi_stlh_perbaikan: data.kondisi_stlh_perbaikan || "",
           status_pemeliharaan: data.status_pemeliharaan || "",
-          penanggung_jawab: data.penanggung_jawab || "",
-          pengawas: data.admin ? data.admin.nama_lengkap : "",
-          deskripsi_pemeliharaan: data.deskripsi || "",
+          penanggung_jawab: data.admin._id || "",
+          pengawas:
+            adminList.find((admin) => admin._id === data.penanggung_jawab)
+              ?.nama_lengkap || data.penanggung_jawab,
+          deskripsi_pemeliharaan: "",
           deskripsi_kerusakan: data.deskripsi_kerusakan || "",
           tgl_dilakukan: data.tgl_dilakukan
             ? moment(data.tgl_dilakukan).toDate()
             : new Date(),
           waktu_pemeliharaan: data.waktu_pemeliharaan || "",
-          usia_aset_saat_ini: "", // Data Darurat doesn't have this field
-          maksimal_usia_aset: "", // Data Darurat doesn't have this field
+          usia_aset_saat_ini: "",
+          maksimal_usia_aset: "",
           tahun_produksi: data.aset.tahun_produksi || "",
           vendor_pengelola: data.vendor.nama_vendor || "",
           info_vendor: data.vendor.telp_vendor || "",
@@ -250,8 +312,8 @@ function PemeliharaanAset() {
           garansi_berakhir: data.aset.garansi_berakhir
             ? moment(data.aset.garansi_berakhir).toDate()
             : new Date(),
-          gambar_aset: data.gambar_darurat.image_url || "", // Set asset image
-          status, // simpan status data
+          gambar_aset: data.gambar_darurat?.image_url || "",
+          status,
         });
       }
 
@@ -297,10 +359,17 @@ function PemeliharaanAset() {
   };
 
   const confirmDelete = async () => {
-    const url = modal.status === "Data Darurat" ? DARURAT_URL : API_URL;
     try {
-      // Ensure you have the token
-      await deleteData(`${url}/${modal.id}`);
+      const token = localStorage.getItem("token");
+      const url =
+        modal.status === "Data Darurat"
+          ? `${BASE_URL_API}api/v1/manage-aset/darurat/${modal.id}`
+          : `${API_URL}/${modal.id}`;
+      await deleteData(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setAssets(assets.filter((asset) => asset._id !== modal.id));
       enqueueSnackbar("Aset berhasil dihapus.", { variant: "success" });
     } catch (error) {
@@ -353,20 +422,24 @@ function PemeliharaanAset() {
       rencana_id: editFormData.rencana_id,
       kondisi_stlh_perbaikan: editFormData.kondisi_stlh_perbaikan,
       status_pemeliharaan: editFormData.status_pemeliharaan,
-      penanggung_jawab: editFormData.pengawas, // Update for pengawas
+      penanggung_jawab: editFormData.pengawas,
       deskripsi: editFormData.deskripsi_pemeliharaan,
       tgl_dilakukan: moment(editFormData.tgl_dilakukan).format("YYYY-MM-DD"),
       waktu_pemeliharaan: editFormData.waktu_pemeliharaan,
-      admin_id: editFormData.penanggung_jawab, // Add admin_id for penanggung_jawab
+      admin_id: editFormData.penanggung_jawab,
     };
     console.log("Payload data:", payload);
     try {
-      // Ensure you have the token
-      const url =
-        editFormData.status === "Data Darurat"
-          ? `${DARURAT_URL}/${editFormData.asset_id}`
-          : `${API_URL}/${editFormData.asset_id}`;
-      const response = await updateData(url, payload);
+      const token = localStorage.getItem("token");
+      const response = await updateData(
+        `${API_URL}/${editFormData.asset_id}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       console.log("Response data:", response);
       fetchAssets();
       enqueueSnackbar("Data berhasil diperbarui!", { variant: "success" });
@@ -479,24 +552,48 @@ function PemeliharaanAset() {
                     {asset.vendor.nama_vendor}
                   </td>
                   <td className="overflow-hidden overflow-ellipsis">
-                    {asset.penanggung_jawab}
+                    {adminList.find(
+                      (admin) => admin._id === asset.penanggung_jawab
+                    )?.nama_lengkap || asset.penanggung_jawab}
                   </td>
                   <td className="overflow-hidden overflow-ellipsis">
-                    {asset.kondisi_stlh_perbaikan}
+                    <span
+                      style={{
+                        ...getTagStyle(asset.kondisi_stlh_perbaikan),
+                        display: "inline-block",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {asset.kondisi_stlh_perbaikan}
+                    </span>
                   </td>
                   <td className="overflow-hidden overflow-ellipsis">
-                    {asset.status_pemeliharaan}
+                    <span
+                      style={{
+                        ...getTagStyle(asset.status_pemeliharaan),
+                        display: "inline-block",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {asset.status_pemeliharaan}
+                    </span>
                   </td>
                   <td className="overflow-hidden overflow-ellipsis">
                     {asset.status}
                   </td>
                   <td className="overflow-hidden overflow-ellipsis flex">
-                    <button
-                      className="btn btn-square btn-ghost text-red-500"
-                      onClick={() => handleDeleteAsset(asset._id, asset.status)}
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
+                    {role.role !== "admin aset" && (
+                      <button
+                        className="btn btn-square btn-ghost text-red-500"
+                        onClick={() =>
+                          handleDeleteAsset(asset._id, asset.status)
+                        }
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
                     <button
                       className="btn btn-square btn-ghost text-yellow-500"
                       onClick={() => handleEditAsset(asset._id, asset.status)}
@@ -779,22 +876,24 @@ function PemeliharaanAset() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label
-                    htmlFor="deskripsi_pemeliharaan"
-                    className="block font-medium"
-                  >
-                    Deskripsi Pemeliharaan
-                  </label>
-                  <input
-                    type="text"
-                    id="deskripsi_pemeliharaan"
-                    name="deskripsi_pemeliharaan"
-                    value={editFormData.deskripsi_pemeliharaan}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-                  />
-                </div>
+                {editFormData.status !== "Data Darurat" && (
+                  <div>
+                    <label
+                      htmlFor="deskripsi_pemeliharaan"
+                      className="block font-medium"
+                    >
+                      Deskripsi Pemeliharaan
+                    </label>
+                    <input
+                      type="text"
+                      id="deskripsi_pemeliharaan"
+                      name="deskripsi_pemeliharaan"
+                      value={editFormData.deskripsi_pemeliharaan}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    />
+                  </div>
+                )}
                 <div>
                   <label htmlFor="tgl_dilakukan" className="block font-medium">
                     Tanggal Pemeliharaan Dilakukan
@@ -875,7 +974,6 @@ function PemeliharaanAset() {
         </div>
       </div>
 
-      {/* View Modal */}
       <div
         className={`modal ${isViewModalOpen ? "modal-open" : ""}`}
         onClick={closeViewModal}
@@ -887,13 +985,13 @@ function PemeliharaanAset() {
           <CardInput title="Identitas Aset">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="view_nama_aset" className="block font-medium">
+                <label htmlFor="view_rencana_id" className="block font-medium">
                   Nama Aset
                 </label>
                 <input
                   type="text"
-                  id="view_nama_aset"
-                  name="view_nama_aset"
+                  id="view_rencana_id"
+                  name="view_rencana_id"
                   value={editFormData.nama_aset}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
@@ -920,6 +1018,42 @@ function PemeliharaanAset() {
 
           <CardInput title="Detail Aset" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {editFormData.status === "Data Pemeliharaan" && (
+                <>
+                  <div>
+                    <label
+                      htmlFor="view_usia_aset_saat_ini"
+                      className="block font-medium"
+                    >
+                      Usia Aset Saat Ini
+                    </label>
+                    <input
+                      type="number"
+                      id="view_usia_aset_saat_ini"
+                      name="view_usia_aset_saat_ini"
+                      value={editFormData.usia_aset_saat_ini}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="view_maksimal_usia_aset"
+                      className="block font-medium"
+                    >
+                      Maksimal Usia Aset
+                    </label>
+                    <input
+                      type="number"
+                      id="view_maksimal_usia_aset"
+                      name="view_maksimal_usia_aset"
+                      value={editFormData.maksimal_usia_aset}
+                      className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                      disabled
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label
                   htmlFor="view_tahun_produksi"
@@ -1036,23 +1170,76 @@ function PemeliharaanAset() {
                   type="text"
                   id="view_penanggung_jawab"
                   name="view_penanggung_jawab"
-                  value={editFormData.penanggung_jawab}
+                  value={
+                    adminList.find(
+                      (admin) => admin._id === editFormData.penanggung_jawab
+                    )?.nama_lengkap || editFormData.penanggung_jawab
+                  }
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
+                />
+              </div>
+              <div>
+                <label htmlFor="view_pengawas" className="block font-medium">
+                  Pengawas
+                </label>
+                <input
+                  type="text"
+                  id="view_pengawas"
+                  name="view_pengawas"
+                  value={editFormData.pengawas}
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                  disabled
+                />
+              </div>
+              {editFormData.status !== "Data Darurat" && (
+                <div>
+                  <label
+                    htmlFor="view_deskripsi_pemeliharaan"
+                    className="block font-medium"
+                  >
+                    Deskripsi Pemeliharaan
+                  </label>
+                  <input
+                    type="text"
+                    id="view_deskripsi_pemeliharaan"
+                    name="view_deskripsi_pemeliharaan"
+                    value={editFormData.deskripsi_pemeliharaan}
+                    className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                    disabled
+                  />
+                </div>
+              )}
+              <div>
+                <label
+                  htmlFor="view_tgl_dilakukan"
+                  className="block font-medium"
+                >
+                  Tanggal Pemeliharaan Dilakukan
+                </label>
+                <input
+                  type="text"
+                  id="view_tgl_dilakukan"
+                  name="view_tgl_dilakukan"
+                  value={moment(editFormData.tgl_dilakukan).format(
+                    "DD MMM YYYY"
+                  )}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
                 />
               </div>
               <div>
                 <label
-                  htmlFor="view_deskripsi_pemeliharaan"
+                  htmlFor="view_waktu_pemeliharaan"
                   className="block font-medium"
                 >
-                  Deskripsi Pemeliharaan
+                  Perkiraan Waktu Pemeliharaan
                 </label>
                 <input
                   type="text"
-                  id="view_deskripsi_pemeliharaan"
-                  name="view_deskripsi_pemeliharaan"
-                  value={editFormData.deskripsi_pemeliharaan}
+                  id="view_waktu_pemeliharaan"
+                  name="view_waktu_pemeliharaan"
+                  value={editFormData.waktu_pemeliharaan}
                   className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
                   disabled
                 />

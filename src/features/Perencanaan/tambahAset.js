@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
-import axios from "axios";
 import TitleCard from "../../components/Cards/TitleCard";
 import CardInput from "../../components/Cards/CardInput";
 import DatePicker from "react-datepicker";
@@ -15,6 +14,7 @@ const VENDOR_API_URL = `${BASE_URL_API}api/v1/manage-aset/vendor`;
 
 function TambahAset() {
   const { enqueueSnackbar } = useSnackbar();
+  const role = JSON.parse(localStorage.getItem("user"));
   const [formData, setFormData] = useState({
     namaAset: "",
     kondisiAset: "",
@@ -23,7 +23,7 @@ function TambahAset() {
     tahunProduksi: "",
     tanggalRencanaPemeliharaan: null,
     deskripsiKerusakan: "",
-    statusPerencanaan: "",
+    statusPerencanaan: "Dalam Proses",
     vendorPengelola: "",
     infoVendor: "",
   });
@@ -40,7 +40,7 @@ function TambahAset() {
   const fetchAset = async () => {
     try {
       const response = await fetchData(API_URL_ASET);
-      const sortedData = response.data.sort(
+      const sortedData = (response.data || []).sort(
         (a, b) => new Date(b.aset_masuk) - new Date(a.aset_masuk)
       );
       setAsetList(sortedData);
@@ -53,7 +53,7 @@ function TambahAset() {
   const fetchVendor = async () => {
     try {
       const response = await fetchData(VENDOR_API_URL);
-      const sortedData = response.data.sort(
+      const sortedData = (response.data || []).sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
       setVendorList(sortedData);
@@ -66,7 +66,7 @@ function TambahAset() {
   const fetchPlanningData = async () => {
     try {
       const response = await fetchData(API_URL);
-      setPlanningData(response.data);
+      setPlanningData(response.data || []);
     } catch (error) {
       console.error("Error fetching planning data:", error);
       enqueueSnackbar("Gagal mengambil data perencanaan!", {
@@ -81,7 +81,7 @@ function TambahAset() {
   };
 
   const handleAsetChange = (event) => {
-    const selectedAset = asetList.find(
+    const selectedAset = (asetList || []).find(
       (aset) => aset._id === event.target.value
     );
     if (selectedAset) {
@@ -89,8 +89,8 @@ function TambahAset() {
         ...prev,
         namaAset: selectedAset._id,
         tahunProduksi: selectedAset.tahun_produksi,
-        vendorPengelola: selectedAset.vendor._id,
-        infoVendor: selectedAset.vendor.telp_vendor,
+        vendorPengelola: selectedAset.vendor?._id || "",
+        infoVendor: selectedAset.vendor?.telp_vendor || "",
       }));
     }
   };
@@ -102,7 +102,7 @@ function TambahAset() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const existingData = planningData.find(
+    const existingData = (planningData || []).find(
       (data) => data.aset_id === formData.namaAset
     );
 
@@ -132,7 +132,7 @@ function TambahAset() {
       console.log("API response:", response);
       enqueueSnackbar("Data berhasil disimpan!", { variant: "success" });
 
-      const newVendor = vendorList.find(
+      const newVendor = (vendorList || []).find(
         (vendor) => vendor._id === formData.vendorPengelola
       );
       setVendorList((prevVendorList) => {
@@ -158,7 +158,6 @@ function TambahAset() {
   return (
     <TitleCard title="Rencana Pemeliharaan" topMargin="mt-2">
       <form onSubmit={handleSubmit}>
-        {/* Bagian Identitas Aset menggunakan CardInput */}
         <CardInput title="Identitas Aset">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -199,7 +198,6 @@ function TambahAset() {
           </div>
         </CardInput>
 
-        {/* Bagian Detail Aset menggunakan CardInput */}
         <CardInput title="Detail Aset">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -275,27 +273,30 @@ function TambahAset() {
                 placeholderText="Pilih rencana tanggal Pemeliharaan"
               />
             </div>
-            <div>
-              <label htmlFor="statusPerencanaan" className="block font-medium">
-                Status Perencanaan *
-              </label>
-              <select
-                id="statusPerencanaan"
-                name="statusPerencanaan"
-                value={formData.statusPerencanaan}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
-              >
-                <option value="">Pilih status perencanaan</option>
-                <option value="Disetujui">Disetujui</option>
-                <option value="Dalam Proses">Dalam Proses</option>
-                <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
-              </select>
-            </div>
+            {role.role === "super admin" && (
+              <div>
+                <label
+                  htmlFor="statusPerencanaan"
+                  className="block font-medium"
+                >
+                  Status Perencanaan *
+                </label>
+                <select
+                  id="statusPerencanaan"
+                  name="statusPerencanaan"
+                  value={formData.statusPerencanaan}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                >
+                  <option value="Disetujui">Disetujui</option>
+                  <option value="Dalam Proses">Dalam Proses</option>
+                  <option value="Tidak Diperbaiki">Tidak Diperbaiki</option>
+                </select>
+              </div>
+            )}
           </div>
         </CardInput>
 
-        {/* Bagian Informasi Vendor menggunakan CardInput */}
         <CardInput title="Informasi Vendor">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

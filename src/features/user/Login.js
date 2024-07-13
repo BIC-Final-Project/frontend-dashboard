@@ -7,6 +7,7 @@ import LoginImage from "../../assets/Login.svg"; // Update path if needed
 import LogoWhite from "../../assets/LogoBlack.svg";
 import BASE_URL_API from "../../config";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 function Login() {
   const INITIAL_LOGIN_OBJ = {
@@ -32,6 +33,7 @@ function Login() {
     }
 
     setLoading(true);
+    document.body.classList.add("loading-indicator");
 
     try {
       const response = await axios.post(`${BASE_URL_API}api/v1/auth/login`, {
@@ -43,11 +45,12 @@ function Login() {
 
       const { token, data } = response.data;
 
+      const decodedToken = jwtDecode(token);
+      localStorage.setItem("role", decodedToken.role);
+
       // Simpan token dan data pengguna di localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(data));
-
-      setLoading(false);
 
       // Simpan status login berhasil di localStorage
       localStorage.setItem("login_success", "true");
@@ -55,10 +58,12 @@ function Login() {
       // Alihkan pengguna ke dashboard
       window.location.href = "/app/dashboard";
     } catch (error) {
-      setLoading(false);
       const message = "Email atau Password salah!";
       toast.error(message);
       console.error(error);
+    } finally {
+      setLoading(false);
+      document.body.classList.remove("loading-indicator");
     }
   };
 

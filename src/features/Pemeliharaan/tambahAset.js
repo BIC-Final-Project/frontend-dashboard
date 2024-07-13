@@ -38,6 +38,7 @@ function TambahAset() {
   const [vendorList, setVendorList] = useState([]);
   const [adminList, setAdminList] = useState([]);
   const [selectedRencana, setSelectedRencana] = useState(null);
+  const [isVendorSelected, setIsVendorSelected] = useState(false);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -68,6 +69,23 @@ function TambahAset() {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "vendorPengelola") {
+      const selectedVendor = vendorList.find((vendor) => vendor._id === value);
+      if (selectedVendor) {
+        setFormData((prev) => ({
+          ...prev,
+          infoVendor: selectedVendor.telp_vendor,
+        }));
+        setIsVendorSelected(true);
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          infoVendor: "",
+        }));
+        setIsVendorSelected(false);
+      }
+    }
   };
 
   const handleDateChange = (date, name) => {
@@ -100,6 +118,7 @@ function TambahAset() {
         kondisi_stlh_perbaikan: "",
         pengawas: "",
       });
+      setIsVendorSelected(true);
     }
   };
 
@@ -107,10 +126,10 @@ function TambahAset() {
     event.preventDefault();
     const submitData = {
       rencana_id: formData.rencana_id,
-      admin_id: formData.penanggung_jawab, // Sesuai dengan form admin_id yang dipilih
+      admin_id: formData.penanggung_jawab,
       kondisi_stlh_perbaikan: formData.kondisi_stlh_perbaikan,
       status_pemeliharaan: formData.status_pemeliharaan,
-      penanggung_jawab: formData.pengawas, // Pengawas diisi ke penanggung_jawab
+      penanggung_jawab: formData.pengawas,
       deskripsi: formData.deskripsi,
       tgl_dilakukan: formData.tgl_dilakukan,
       waktu_pemeliharaan: formData.waktu_pemeliharaan,
@@ -297,7 +316,6 @@ function TambahAset() {
                   value={formData.vendorPengelola}
                   onChange={handleInputChange}
                   className={getInputClassName(!!formData.vendorPengelola)}
-                  disabled={!!formData.vendorPengelola}
                 >
                   <option value="">Pilih vendor</option>
                   {vendorList.map((vendor) => (
@@ -307,21 +325,23 @@ function TambahAset() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="infoVendor" className="block font-medium">
-                  Informasi vendor / no telepon
-                </label>
-                <input
-                  type="text"
-                  id="infoVendor"
-                  name="infoVendor"
-                  value={formData.infoVendor}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan informasi vendor"
-                  className={getInputClassName(!!formData.infoVendor)}
-                  disabled={!!formData.infoVendor}
-                />
-              </div>
+              {isVendorSelected && (
+                <div>
+                  <label htmlFor="infoVendor" className="block font-medium">
+                    Informasi Vendor / No Telepon
+                  </label>
+                  <input
+                    type="text"
+                    id="infoVendor"
+                    name="infoVendor"
+                    value={formData.infoVendor}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan informasi vendor"
+                    className={getInputClassName(!!formData.infoVendor)}
+                    disabled={true}
+                  />
+                </div>
+              )}
             </div>
           </CardInput>
 

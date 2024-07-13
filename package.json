@@ -9,8 +9,12 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
     "@heroicons/react": "^2.1.4",
+    "@mui/material": "^5.16.1",
     "@reduxjs/toolkit": "^1.9.0",
+    "@tanstack/react-query": "^5.51.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -19,6 +23,7 @@
     "chart.js": "^4.0.1",
     "dayjs": "^1.11.7",
     "dotenv": "^16.4.5",
+    "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "jwt-decode": "^4.0.0",

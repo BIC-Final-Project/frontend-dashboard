@@ -19,6 +19,7 @@ const ITEMS_PER_PAGE = 10;
 function RiwayatAset() {
   const [assets, setAssets] = useState([]);
   const [filteredAssets, setFilteredAssets] = useState([]);
+  const [adminList, setAdminList] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -33,6 +34,7 @@ function RiwayatAset() {
 
   useEffect(() => {
     fetchAssets();
+    fetchAdminData();
   }, []);
 
   useEffect(() => {
@@ -44,12 +46,24 @@ function RiwayatAset() {
       const response = await fetchData(`${API_URL}`);
       const { data } = response;
 
-      setAssets(data);
-      setFilteredAssets(data);
-      setTotalPages(Math.ceil(data.length / ITEMS_PER_PAGE));
+      setAssets(data || []);
+      setFilteredAssets(data || []);
+      setTotalPages(Math.ceil((data || []).length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Error fetching data.", { variant: "error" });
+    }
+  };
+
+  const fetchAdminData = async () => {
+    try {
+      const response = await fetchData(
+        `${BASE_URL_API}api/v1/manage-aset/admin`
+      );
+      setAdminList(response.data || []);
+    } catch (error) {
+      console.error("Fetching admin error:", error.message);
+      enqueueSnackbar("Gagal memuat data admin.", { variant: "error" });
     }
   };
 
@@ -142,7 +156,8 @@ function RiwayatAset() {
         asset.aset.nama_aset,
         moment(asset.tgl_dilakukan).format("DD MMM YYYY"),
         asset.vendor.nama_vendor,
-        asset.penanggung_jawab,
+        adminList.find((admin) => admin._id === asset.admin_id)?.nama_lengkap ||
+          "N/A",
         asset.kondisi_stlh_perbaikan,
         asset.status_pemeliharaan,
       ]),
@@ -150,7 +165,7 @@ function RiwayatAset() {
     doc.save("riwayat_aset.pdf");
   };
 
-  const paginatedAssets = filteredAssets.slice(
+  const paginatedAssets = (filteredAssets || []).slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -178,43 +193,52 @@ function RiwayatAset() {
           </div>
         </div>
         <div className="overflow-x-auto w-full">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>Nama Aset</th>
-                <th>Tanggal Pemeliharaan</th>
-                <th>Vendor Pengelola</th>
-                <th>Penanggung Jawab</th>
-                <th>Kondisi Aset</th>
-                <th>Status Pemeliharaan</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedAssets.map((asset) => (
-                <tr key={asset._id}>
-                  <td>{asset.aset.nama_aset || "N/A"}</td>
-                  <td>
-                    {asset.tgl_dilakukan
-                      ? moment(asset.tgl_dilakukan).format("DD MMM YYYY")
-                      : "N/A"}
-                  </td>
-                  <td>{asset.vendor.nama_vendor || "N/A"}</td>
-                  <td>{asset.penanggung_jawab || "N/A"}</td>
-                  <td>{asset.kondisi_stlh_perbaikan || "N/A"}</td>
-                  <td>{asset.status_pemeliharaan || "N/A"}</td>
-                  <td>
-                    <button
-                      className="btn btn-square btn-ghost"
-                      onClick={() => handleViewDetail(asset._id)}
-                    >
-                      <EyeIcon className="w-5 h-5" />
-                    </button>
-                  </td>
+          {filteredAssets.length === 0 ? (
+            <div className="text-center py-4">
+              Tidak ada riwayat aset yang ditemukan.
+            </div>
+          ) : (
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Nama Aset</th>
+                  <th>Tanggal Pemeliharaan</th>
+                  <th>Vendor Pengelola</th>
+                  <th>Penanggung Jawab</th>
+                  <th>Kondisi Aset</th>
+                  <th>Status Pemeliharaan</th>
+                  <th>Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedAssets.map((asset) => (
+                  <tr key={asset._id}>
+                    <td>{asset.aset.nama_aset || "N/A"}</td>
+                    <td>
+                      {asset.tgl_dilakukan
+                        ? moment(asset.tgl_dilakukan).format("DD MMM YYYY")
+                        : "N/A"}
+                    </td>
+                    <td>{asset.vendor.nama_vendor || "N/A"}</td>
+                    <td>
+                      {adminList.find((admin) => admin._id === asset.admin_id)
+                        ?.nama_lengkap || "N/A"}
+                    </td>
+                    <td>{asset.kondisi_stlh_perbaikan || "N/A"}</td>
+                    <td>{asset.status_pemeliharaan || "N/A"}</td>
+                    <td>
+                      <button
+                        className="btn btn-square btn-ghost"
+                        onClick={() => handleViewDetail(asset._id)}
+                      >
+                        <EyeIcon className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
         <div className="flex justify-between items-center mt-4">
           <div>

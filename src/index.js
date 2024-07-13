@@ -7,6 +7,10 @@ import store from "./app/store";
 import { Provider } from "react-redux";
 import SuspenseContent from "./containers/SuspenseContent";
 import { SnackbarProvider } from "notistack";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Membuat instance dari QueryClient
+const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -14,7 +18,9 @@ root.render(
   <Suspense fallback={<SuspenseContent />}>
     <Provider store={store}>
       <SnackbarProvider maxSnack={3}>
-        <App />
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
       </SnackbarProvider>
     </Provider>
   </Suspense>
