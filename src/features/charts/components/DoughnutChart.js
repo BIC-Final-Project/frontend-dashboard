@@ -12,6 +12,7 @@ import TitleCard from "../../../components/Cards/TitleCard";
 import { fetchData } from "../../../utils/utils";
 import BASE_URL_API from "../../../config";
 import { useSnackbar } from "notistack";
+import Spinner from "../../../components/Spinner"; // Add the Spinner component
 
 ChartJS.register(ArcElement, Tooltip, Legend, Filler);
 
@@ -19,6 +20,12 @@ const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
 
 function DoughnutChart() {
   const [chartData, setChartData] = useState({});
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [statusCounts, setStatusCounts] = useState({
+    Selesai: 0,
+    "Sedang berlangsung": 0,
+    "Perbaikan gagal": 0,
+  });
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -67,14 +74,14 @@ function DoughnutChart() {
             label: "# of Pemeliharaan",
             data: counts,
             backgroundColor: [
-              "rgba(255, 99, 132, 0.8)",
-              "rgba(54, 162, 235, 0.8)",
-              "rgba(255, 206, 86, 0.8)",
+              "rgba(160, 254, 208, 0.8)", // Color for Selesai
+              "rgba(255, 233, 158, 0.8)", // Color for Sedang berlangsung
+              "rgba(255, 146, 134, 0.8)", // Color for Perbaikan gagal
             ],
             borderColor: [
-              "rgba(255, 99, 132, 1)",
-              "rgba(54, 162, 235, 1)",
-              "rgba(255, 206, 86, 1)",
+              "rgba(160, 254, 208, 1)", // Border color for Selesai
+              "rgba(255, 233, 158, 1)", // Border color for Sedang berlangsung
+              "rgba(255, 146, 134, 1)", // Border color for Perbaikan gagal
             ],
             borderWidth: 1,
           },
@@ -82,9 +89,12 @@ function DoughnutChart() {
       };
 
       setChartData(chartData);
+      setStatusCounts(statusCounts); // Set status counts
+      setIsLoading(false); // Set loading state to false
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Gagal memuat data pemeliharaan.", { variant: "error" });
+      setIsLoading(false); // Set loading state to false
     }
   };
 
@@ -93,16 +103,60 @@ function DoughnutChart() {
     plugins: {
       legend: {
         position: "top",
+        labels: {
+          usePointStyle: true, // Use point style for legend
+          boxWidth: 10,
+        },
       },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || "";
+            const value = context.raw || 0;
+            return `${label}: ${value}`;
+          },
+        },
+      },
+    },
+    animation: {
+      duration: 1500, // Set animation duration
     },
   };
 
   return (
     <TitleCard title={"Status Pemeliharaan"}>
-      {chartData.labels ? (
-        <Doughnut options={options} data={chartData} />
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Spinner /> {/* Display a spinner while loading */}
+        </div>
       ) : (
-        <p>Loading...</p>
+        <>
+          <div className="p-4">
+            <Doughnut options={options} data={chartData} />
+          </div>
+          <div className="p-4 mt-4 bg-gray-100 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">
+              Rincian Status Pemeliharaan
+            </h3>
+            <ul className="list-none space-y-2">
+              <li className="flex items-center space-x-2">
+                <span className="block w-4 h-4 bg-green-200 rounded-full"></span>
+                <span className="font-semibold">Selesai:</span>{" "}
+                <span>{statusCounts.Selesai}</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <span className="block w-4 h-4 bg-yellow-200 rounded-full"></span>
+                <span className="font-semibold">Sedang berlangsung:</span>{" "}
+                <span>{statusCounts["Sedang berlangsung"]}</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <span className="block w-4 h-4 bg-red-200 rounded-full"></span>
+                <span className="font-semibold">Perbaikan gagal:</span>{" "}
+                <span>{statusCounts["Perbaikan gagal"]}</span>
+              </li>
+            </ul>
+          </div>
+        </>
       )}
     </TitleCard>
   );
