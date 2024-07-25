@@ -383,9 +383,14 @@ function TambahAset() {
                 id="infoVendor"
                 name="infoVendor"
                 value={formData.infoVendor}
-                onChange={handleInputChange}
+                readOnly={!!formData.VendorID}
                 placeholder="Masukkan informasi vendor"
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                className={`w-full p-2 border border-gray-300 rounded ${
+                  formData.VendorID
+                    ? "bg-gray-200 text-gray-700"
+                    : "bg-gray-50 text-gray-900"
+                }`}
+                onChange={!formData.VendorID ? handleInputChange : undefined}
               />
 
               <label htmlFor="tglAsetMasuk" className="block font-medium mt-4">

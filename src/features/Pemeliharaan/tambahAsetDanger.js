@@ -81,9 +81,18 @@ function TambahAsetDanger() {
         usiaAsetSaatIni: "", // This should be fetched from relevant data if available
         maksimalUsiaAset: "", // This should be fetched from relevant data if available
         tahunProduksi: selectedAset.tahun_produksi,
-        deskripsiKerusakan: "", // Ensuring this remains empty
         vendorPengelola: selectedAset.vendor_id,
         infoVendor: selectedAset.vendor ? selectedAset.vendor.telp_vendor : "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        namaAset: "",
+        usiaAsetSaatIni: "",
+        maksimalUsiaAset: "",
+        tahunProduksi: "",
+        vendorPengelola: "",
+        infoVendor: "",
       }));
     }
   };
@@ -138,6 +147,11 @@ function TambahAsetDanger() {
       enqueueSnackbar("Gagal menyimpan data!", { variant: "error" });
     }
   };
+
+  const getInputClassName = (isDisabled) =>
+    `w-full p-2 border rounded text-gray-900 ${
+      isDisabled ? "bg-gray-200 border-gray-400" : "bg-gray-50 border-gray-300"
+    }`;
 
   return (
     <TitleCard title="Tambah Pemeliharaan Aset Darurat" topMargin="mt-2">
@@ -201,7 +215,8 @@ function TambahAsetDanger() {
                 value={formData.tahunProduksi}
                 onChange={handleInputChange}
                 placeholder="Masukkan tahun produksi"
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={!!formData.namaAset}
               />
             </div>
             <div>
@@ -230,9 +245,10 @@ function TambahAsetDanger() {
                 onChange={(date) =>
                   handleDateChange(date, "tanggalPemeliharaanAset")
                 }
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                className={getInputClassName(!!formData.namaAset)}
                 wrapperClassName="date-picker"
                 dateFormat="MMMM d, yyyy"
+                disabled={!!formData.namaAset}
               />
             </div>
             <div>
@@ -266,7 +282,8 @@ function TambahAsetDanger() {
                 name="vendorPengelola"
                 value={formData.vendorPengelola}
                 onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={!!formData.namaAset}
               >
                 <option value="">Pilih vendor</option>
                 {Array.isArray(vendorList) &&
@@ -288,7 +305,8 @@ function TambahAsetDanger() {
                 value={formData.infoVendor}
                 onChange={handleInputChange}
                 placeholder="Masukkan informasi vendor"
-                className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-900"
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={true}
               />
             </div>
           </div>
@@ -391,7 +409,7 @@ function TambahAsetDanger() {
           </div>
         </CardInput>
 
-        <CardInput title="Dokumen Aset">
+        <CardInput title="Dokumen Kerusakan">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex items-center justify-center w-full sm:w-24 h-24 bg-gray-200 rounded">
               {imagePreview ? (
@@ -438,7 +456,7 @@ function TambahAsetDanger() {
             </div>
           </div>
           <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
-            Anda bisa mengunggah satu foto utama aset di sini.
+            Anda bisa mengunggah satu foto kerusakan aset di sini.
           </p>
         </CardInput>
 

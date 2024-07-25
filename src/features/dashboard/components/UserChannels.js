@@ -41,7 +41,7 @@ function UserChannels() {
               </th>
               <th className="border border-gray-200 px-4 py-2">Nama Lengkap</th>
               <th className="border border-gray-200 px-4 py-2">Email</th>
-              <th className="border border-gray-200 px-4 py-2">Role</th>
+              <th className="border border-gray-200 px-4 py-2">Status Admin</th>
             </tr>
           </thead>
           <tbody>

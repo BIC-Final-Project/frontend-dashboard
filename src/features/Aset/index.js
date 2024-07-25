@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import TitleCard from "../../components/Cards/TitleCard";
@@ -12,7 +12,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
-import { fetchData, postData, updateData, deleteData } from "../../utils/utils";
+import { fetchData, updateData, deleteData } from "../../utils/utils";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -51,8 +51,7 @@ function DetailAset() {
     tanggalGaransiMulai: new Date(),
     tanggalGaransiBerakhir: new Date(),
   });
-  const [viewAssetData, setViewAssetData] = useState(null);
-  const [imageToView, setImageToView] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
@@ -60,7 +59,9 @@ function DetailAset() {
   const [vendor, setVendor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const modalRef = useRef(null);
+  const editModalRef = useRef(null);
+  const viewModalRef = useRef(null);
+  const imageModalRef = useRef(null);
   const role = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -74,12 +75,12 @@ function DetailAset() {
 
   useEffect(() => {
     if (isEditModalOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutsideEdit);
     } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutsideEdit);
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutsideEdit);
     };
   }, [isEditModalOpen]);
 
@@ -94,15 +95,24 @@ function DetailAset() {
     };
   }, [isViewModalOpen]);
 
-  const handleClickOutside = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
+  const handleClickOutsideEdit = (event) => {
+    if (editModalRef.current && !editModalRef.current.contains(event.target)) {
       closeEditModal();
     }
   };
 
   const handleClickOutsideView = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
+    if (viewModalRef.current && !viewModalRef.current.contains(event.target)) {
       closeViewModal();
+    }
+  };
+
+  const handleClickOutsideImage = (event) => {
+    if (
+      imageModalRef.current &&
+      !imageModalRef.current.contains(event.target)
+    ) {
+      closeImageModal();
     }
   };
 
@@ -228,6 +238,7 @@ function DetailAset() {
     setImagePreview(
       asset.gambar_aset.image_url || "https://via.placeholder.com/150"
     );
+    setSelectedImage(asset.gambar_aset.image_url);
     setIsViewModalOpen(true);
   };
 
@@ -260,6 +271,7 @@ function DetailAset() {
 
   const closeImageModal = () => {
     setIsImageModalOpen(false);
+    setSelectedImage(null);
   };
 
   const confirmDelete = async () => {
@@ -385,10 +397,9 @@ function DetailAset() {
     return vendor ? vendor.nama_vendor : "Unknown Vendor";
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const doc = new jsPDF();
     const columns = [
-      { header: "Foto Aset", dataKey: "gambar_aset" },
       { header: "Nama Aset", dataKey: "namaAset" },
       { header: "Tgl Aset Masuk", dataKey: "tglAsetMasuk" },
       { header: "Masa Garansi Dimulai", dataKey: "masaGaransiDimulai" },
@@ -399,12 +410,6 @@ function DetailAset() {
     ];
 
     const rows = filteredAssets.map((asset) => ({
-      fotoAset: {
-        data: asset.gambar_aset.image_url,
-        type: "image",
-        width: 20,
-        height: 20,
-      },
       namaAset: asset.nama_aset,
       tglAsetMasuk: moment(asset.aset_masuk).format("DD MMM YYYY"),
       masaGaransiDimulai: moment(asset.garansi_dimulai).format("DD MMM YYYY"),
@@ -414,49 +419,61 @@ function DetailAset() {
       jumlahAset: asset.jumlah_aset,
     }));
 
-    const pageHeight = doc.internal.pageSize.height;
-    let cursorY = 10;
-
     doc.autoTable({
       head: [columns.map((col) => col.header)],
-      body: rows.map((row) =>
-        columns.map((col) =>
-          col.dataKey === "gambar_aset"
-            ? {
-                ...row[col.dataKey.image_url],
-                cellWidth: "wrap",
-                minCellHeight: 20,
-              }
-            : row[col.dataKey]
-        )
-      ),
-      didDrawCell: (data) => {
-        if (
-          data.column.dataKey === "gambar_aset" &&
-          data.cell.section === "body"
-        ) {
-          const { data: image_url, width, height } = data.cell.raw;
-          console.log(image_url);
-          if (image_url) {
-            const imgProps = doc.getImageProperties(image_url);
-            const imgHeight = (imgProps.height * width) / imgProps.width;
-            doc.addImage(
-              image_url,
-              "JPEG",
-              data.cell.x + 2,
-              data.cell.y + 2,
-              width,
-              imgHeight
-            );
-          }
-        }
-      },
-      startY: cursorY,
+      body: rows.map((row) => columns.map((col) => row[col.dataKey])),
+      startY: 10,
       margin: { top: 10 },
       rowPageBreak: "avoid",
     });
 
     doc.save("assets.pdf");
+  };
+
+  const fetchImageAsDataUri = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = url;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg"));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = (err) => {
+        reject(err);
+      };
+    });
+  };
+
+  const getImageDataUri = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = url;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg"));
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = (err) => {
+        reject(err);
+      };
+    });
   };
 
   const renderAssetForm = (readOnly) => (
@@ -595,10 +612,13 @@ function DetailAset() {
       </CardInput>
 
       <CardInput title="Dokumen Aset" className="mt-4">
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex flex-col items-center gap-4">
           <div
-            className="flex items-center justify-center w-full sm:w-24 h-24 bg-gray-200 rounded cursor-pointer"
-            onClick={() => setIsImageModalOpen(true)}
+            className="flex items-center justify-center w-48 h-48 bg-gray-200 rounded cursor-pointer"
+            onClick={() => {
+              setSelectedImage(imagePreview);
+              setIsImageModalOpen(true);
+            }}
           >
             {imagePreview ? (
               <img
@@ -645,9 +665,6 @@ function DetailAset() {
             </div>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
-          Anda bisa mengunggah satu foto utama aset di sini.
-        </p>
       </CardInput>
 
       <CardInput title="Vendor Aset" className="mt-4">
@@ -782,6 +799,13 @@ function DetailAset() {
                                     "https://via.placeholder.com/150"
                                   }
                                   alt="Foto Aset"
+                                  onClick={() => {
+                                    setSelectedImage(
+                                      asset.gambar_aset.image_url
+                                    );
+                                    setIsImageModalOpen(true);
+                                  }}
+                                  className="cursor-pointer"
                                 />
                               </div>
                             </div>
@@ -872,7 +896,7 @@ function DetailAset() {
       />
 
       {isEditModalOpen && (
-        <div className="modal modal-open" onClick={closeEditModal}>
+        <div className="modal modal-open">
           <button
             className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
             onClick={closeEditModal}
@@ -880,7 +904,7 @@ function DetailAset() {
             <XMarkIcon className="w-6 h-6 text-gray-500" />
           </button>
           <div
-            ref={modalRef}
+            ref={editModalRef}
             className="modal-box relative max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -890,7 +914,7 @@ function DetailAset() {
       )}
 
       {isViewModalOpen && (
-        <div className="modal modal-open" onClick={closeViewModal}>
+        <div className="modal modal-open">
           <button
             className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
             onClick={closeViewModal}
@@ -898,9 +922,10 @@ function DetailAset() {
             <XMarkIcon className="w-6 h-6 text-gray-500" />
           </button>
           <div
-            ref={modalRef}
+            ref={viewModalRef}
             className="modal-box relative max-w-4xl"
             onClick={(e) => e.stopPropagation()}
+            style={{ overflow: "hidden" }} // Prevent scrolling
           >
             {renderAssetForm(true)}
           </div>
@@ -910,6 +935,7 @@ function DetailAset() {
       {isImageModalOpen && (
         <div className="modal modal-open" onClick={closeImageModal}>
           <div
+            ref={imageModalRef}
             className="modal-box relative max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -919,11 +945,18 @@ function DetailAset() {
             >
               <XMarkIcon className="w-6 h-6 text-gray-500" />
             </button>
-            <img
-              src={imagePreview}
-              alt="Gambar Aset"
-              className="object-contain h-full w-full"
-            />
+            <div className="flex justify-center items-center">
+              {selectedImage && (
+                <img
+                  src={selectedImage}
+                  alt="Selected Asset"
+                  className="max-w-full max-h-screen"
+                />
+              )}
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button label="Tutup" onClick={closeImageModal} />
+            </div>
           </div>
         </div>
       )}

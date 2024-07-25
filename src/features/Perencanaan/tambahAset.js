@@ -92,6 +92,14 @@ function TambahAset() {
         vendorPengelola: selectedAset.vendor?._id || "",
         infoVendor: selectedAset.vendor?.telp_vendor || "",
       }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        namaAset: "",
+        tahunProduksi: "",
+        vendorPengelola: "",
+        infoVendor: "",
+      }));
     }
   };
 
@@ -239,8 +247,8 @@ function TambahAset() {
                 value={formData.tahunProduksi}
                 onChange={handleInputChange}
                 placeholder="Masukkan tahun produksi"
-                className={getInputClassName(!!formData.tahunProduksi)}
-                disabled={!!formData.tahunProduksi}
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={!!formData.namaAset}
               />
             </div>
             <div>
@@ -308,8 +316,8 @@ function TambahAset() {
                 name="vendorPengelola"
                 value={formData.vendorPengelola}
                 onChange={handleInputChange}
-                className={getInputClassName(!!formData.vendorPengelola)}
-                disabled={!!formData.vendorPengelola}
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={!!formData.namaAset}
               >
                 <option value="">Pilih vendor</option>
                 {vendorList.map((vendor) => (
@@ -330,8 +338,8 @@ function TambahAset() {
                 value={formData.infoVendor}
                 onChange={handleInputChange}
                 placeholder="Masukkan informasi vendor"
-                className={getInputClassName(!!formData.infoVendor)}
-                disabled={!!formData.infoVendor}
+                className={getInputClassName(!!formData.namaAset)}
+                readOnly={!!formData.namaAset}
               />
             </div>
           </div>
