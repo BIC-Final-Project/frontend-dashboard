@@ -12,6 +12,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/Button";
 import BASE_URL_API from "../../config";
 import { fetchData, updateData, deleteData } from "../../utils/utils";
+import CircularProgress from "@mui/material/CircularProgress"; // Import CircularProgress
 
 const API_URL = `${BASE_URL_API}api/v1/manage-aset/pelihara`;
 const RENCANA_URL = `${BASE_URL_API}api/v1/manage-aset/rencana`;
@@ -102,6 +103,7 @@ function PemeliharaanAset() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
 
   useEffect(() => {
     fetchAssets();
@@ -112,6 +114,7 @@ function PemeliharaanAset() {
   }, [searchQuery, filterStatus]);
 
   const fetchAssets = async () => {
+    setIsLoading(true); // Set loading state to true
     try {
       const token = localStorage.getItem("token");
       const response = await fetchData(API_URL, {
@@ -166,6 +169,8 @@ function PemeliharaanAset() {
     } catch (error) {
       console.error("Fetching error:", error.message);
       enqueueSnackbar("Gagal memuat data aset.", { variant: "error" });
+    } finally {
+      setIsLoading(false); // Set loading state to false
     }
   };
 
@@ -702,93 +707,99 @@ function PemeliharaanAset() {
             <option value="Data Darurat">Data Darurat</option>
           </select>
         </div>
-        <div className="overflow-x-auto w-full">
-          <table className="table w-full">
-            <thead>
-              <tr>
-                <th>Nama Aset</th>
-                <th>Tanggal Pemeliharaan</th>
-                <th>Vendor Pengelola</th>
-                <th>Penanggung Jawab</th>
-                <th>Kondisi Setelah Perbaikan</th>
-                <th>Status Perbaikan</th>
-                <th>Data Perbaikan</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedAssets.map((asset) => (
-                <tr key={asset._id} className="whitespace-nowrap">
-                  <td className="overflow-hidden overflow-ellipsis">
-                    {asset.aset.nama_aset}
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    {moment(asset.tgl_dilakukan).format("DD MMM YYYY")}
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    {asset.vendor.nama_vendor}
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    {adminList.find(
-                      (admin) => admin._id === asset.penanggung_jawab
-                    )?.nama_lengkap || asset.penanggung_jawab}
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    <span
-                      style={{
-                        ...getTagStyle(asset.kondisi_stlh_perbaikan),
-                        display: "inline-block",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      {asset.kondisi_stlh_perbaikan}
-                    </span>
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    <span
-                      style={{
-                        ...getTagStyle(asset.status_pemeliharaan),
-                        display: "inline-block",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      {asset.status_pemeliharaan}
-                    </span>
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis">
-                    {asset.status}
-                  </td>
-                  <td className="overflow-hidden overflow-ellipsis flex">
-                    {role.role !== "admin aset" && (
-                      <button
-                        className="btn btn-square btn-ghost text-red-500"
-                        onClick={() =>
-                          handleDeleteAsset(asset._id, asset.status)
-                        }
-                      >
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-square btn-ghost text-yellow-500"
-                      onClick={() => handleEditAsset(asset._id, asset.status)}
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      className="btn btn-square btn-ghost text-black"
-                      onClick={() => handleViewAsset(asset._id, asset.status)}
-                    >
-                      <EyeIcon className="w-5 h-5" />
-                    </button>
-                  </td>
+        {isLoading ? ( // Display loading spinner when data is being fetched
+          <div className="flex justify-center items-center h-64">
+            <CircularProgress />
+          </div>
+        ) : (
+          <div className="overflow-x-auto w-full">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Nama Aset</th>
+                  <th>Tanggal Pemeliharaan</th>
+                  <th>Vendor Pengelola</th>
+                  <th>Penanggung Jawab</th>
+                  <th>Kondisi Setelah Perbaikan</th>
+                  <th>Status Perbaikan</th>
+                  <th>Data Perbaikan</th>
+                  <th>Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {paginatedAssets.map((asset) => (
+                  <tr key={asset._id} className="whitespace-nowrap">
+                    <td className="overflow-hidden overflow-ellipsis">
+                      {asset.aset.nama_aset}
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      {moment(asset.tgl_dilakukan).format("DD MMM YYYY")}
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      {asset.vendor.nama_vendor}
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      {adminList.find(
+                        (admin) => admin._id === asset.penanggung_jawab
+                      )?.nama_lengkap || asset.penanggung_jawab}
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      <span
+                        style={{
+                          ...getTagStyle(asset.kondisi_stlh_perbaikan),
+                          display: "inline-block",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {asset.kondisi_stlh_perbaikan}
+                      </span>
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      <span
+                        style={{
+                          ...getTagStyle(asset.status_pemeliharaan),
+                          display: "inline-block",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {asset.status_pemeliharaan}
+                      </span>
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis">
+                      {asset.status}
+                    </td>
+                    <td className="overflow-hidden overflow-ellipsis flex">
+                      {role.role !== "admin aset" && (
+                        <button
+                          className="btn btn-square btn-ghost text-red-500"
+                          onClick={() =>
+                            handleDeleteAsset(asset._id, asset.status)
+                          }
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-square btn-ghost text-yellow-500"
+                        onClick={() => handleEditAsset(asset._id, asset.status)}
+                      >
+                        <PencilIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        className="btn btn-square btn-ghost text-black"
+                        onClick={() => handleViewAsset(asset._id, asset.status)}
+                      >
+                        <EyeIcon className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         <div className="flex justify-between items-center mt-4">
           <div>
             <button

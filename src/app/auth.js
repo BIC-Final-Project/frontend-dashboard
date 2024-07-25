@@ -13,7 +13,7 @@ const checkAuth = () => {
     axios.interceptors.request.use(
       function (config) {
         // UPDATE: Add this code to show global loading indicator
-        // document.body.classList.add("loading-indicator");
+        document.body.classList.add("loading-indicator");
         return config;
       },
       function (error) {
@@ -24,12 +24,12 @@ const checkAuth = () => {
     axios.interceptors.response.use(
       function (response) {
         // UPDATE: Add this code to hide global loading indicator
-        // document.body.classList.remove("loading-indicator");
+        document.body.classList.remove("loading-indicator");
         return response;
       },
       function (error) {
         // Any status codes that falls outside the range of 2xx cause this function to trigger
-        // document.body.classList.remove("loading-indicator");
+        document.body.classList.remove("loading-indicator");
         const decodedToken = jwtDecode(TOKEN);
         const isExpired = decodedToken.exp * 1000 < Date.now();
         if (isExpired) {
