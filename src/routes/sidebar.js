@@ -25,14 +25,14 @@ const sidebar = [
     name: "Booking Fasilitas", // name that appear in Sidebar
     submenu: [
       {
-        path: "/404",
+        path: "/app/booking?page=1&limit=10",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "List Booking",
       },
       {
-        path: "/404",
+        path: "/app/booking/cari",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Kode Booking",
+        name: "Cari Booking",
       },
     ],
   },
@@ -42,24 +42,24 @@ const sidebar = [
     name: "Membership", // name that appear in Sidebar
     submenu: [
       {
-        path: "/404",
+        path: "/app/membership?page=1&limit=10",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "List Member",
       },
       {
-        path: "/404",
+        path: "/app/paket-membership",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
         name: "Paket Membership",
       },
     ],
   },
   {
-    path: "/app/fasilitas", // unique path for Fasilitas
+    path: "/app/fasilitas?page=1&limit=10", // unique path for Fasilitas
     icon: <img src={fasilitas} className={`${iconClasses} inline`} />, // icon component
     name: "Fasilitas", // name that appear in Sidebar
   },
   {
-    path: "/app/promo-diskon", // unique path for Promo & Diskon
+    path: "/app/promo?page=1&limit=10", // unique path for Promo & Diskon
     icon: <img src={promo} className={`${iconClasses} inline`} />, // icon component
     name: "Promo & Diskon", // name that appear in Sidebar
   },

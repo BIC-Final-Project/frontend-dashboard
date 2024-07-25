@@ -11,6 +11,8 @@ import checkAuth from "./app/auth";
 import initializeApp from "./app/init";
 import PrivateLayout from "./components/Layout/PrivateLayout";
 import SuspenseContent from "./containers/SuspenseContent";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Importing pages
 const Layout = lazy(() => import("./containers/Layout"));
@@ -25,17 +27,19 @@ initializeApp();
 checkAuth();
 
 function App() {
-  useEffect(() => {
-    if (!localStorage.getItem("theme")) {
-      localStorage.setItem("theme", "light");
-    }
-    // 👆 daisy UI themes initialization
-    themeChange(false);
-  }, []);
+  // useEffect(() => {
+  //   if (!localStorage.getItem("theme")) {
+  //     localStorage.setItem("theme", "light");
+  //   }
+  //   // 👆 daisy UI themes initialization
+  //   themeChange(false);
+  // }, []);
 
   return (
     <>
       <Router>
+        <ToastContainer />
+
         <Suspense fallback={<SuspenseContent />}>
           <Routes>
             <Route path="/login" index element={<Login />} />
@@ -47,10 +51,7 @@ function App() {
               <Route path="/app/*" element={<Layout />} />
             </Route>
 
-            <Route
-              path="*"
-              element={<Navigate to="/app/dashboard" replace />}
-            />
+            <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
           </Routes>
         </Suspense>
       </Router>

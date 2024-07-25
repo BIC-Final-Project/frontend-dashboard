@@ -42,7 +42,7 @@ function LeftSidebar() {
           style={{ padding: "0", margin: "0" }}
         >
           <Link
-            to={"/app/welcome"}
+            to={"/app/dashboard"}
             style={{
               display: "flex",
               justifyContent: "center",
@@ -53,7 +53,7 @@ function LeftSidebar() {
             <img
               src={logoPath}
               alt="Logo"
-              className="w-50 h-20"
+              className="w-48 h-20"
               style={{ margin: "0", padding: "0" }}
             />
           </Link>
@@ -83,7 +83,7 @@ function LeftSidebar() {
           </li>
         ))}
         {/* Add profile section at the bottom */}
-        <li className="mt-auto p-4">
+        {/* <li className="mt-auto p-4">
           <div className="flex items-center">
             <div className="avatar">
               <div className="rounded-full w-10 h-10 m-1">
@@ -95,7 +95,7 @@ function LeftSidebar() {
               <div className="text-xs text-gray-600">BIC@gmail.com</div>
             </div>
           </div>
-        </li>
+        </li> */}
       </ul>
     </div>
   );

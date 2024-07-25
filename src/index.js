@@ -7,10 +7,8 @@ import store from "./app/store";
 import { Provider } from "react-redux";
 import SuspenseContent from "./containers/SuspenseContent";
 import { SnackbarProvider } from "notistack";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// Membuat instance dari QueryClient
-const queryClient = new QueryClient();
+import { QueryClientProvider } from "@tanstack/react-query";
+import queryClient from "./moduls/operational/helper/utils/queryClient";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

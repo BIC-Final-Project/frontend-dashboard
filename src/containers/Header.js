@@ -1,13 +1,26 @@
 import { themeChange } from "theme-change";
 import React, { useEffect, useState } from "react";
+import { NavLink, Routes, Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import BellIcon from "@heroicons/react/24/outline/BellIcon";
 import Bars3Icon from "@heroicons/react/24/outline/Bars3Icon";
-import MoonIcon from "@heroicons/react/24/outline/MoonIcon";
-import SunIcon from "@heroicons/react/24/outline/SunIcon";
 import { openRightDrawer } from "../features/common/rightDrawerSlice";
 import { RIGHT_DRAWER_TYPES } from "../utils/globalConstantUtil";
-import { NavLink, Routes, Link, useLocation } from "react-router-dom";
+import iconSetting from '../assets/icons/setting.svg'
+import iconLogout from '../assets/icons/logout.svg'
+import profilDefault from '../assets/icons/profil-default.png'
+
+const dropdownLinks = [
+  {
+    path: "/app/settings-profile",
+    title: "Setting Profile",
+    icon: iconSetting,
+  },
+  {
+    path: "",
+    title: "Log Out",
+    icon: iconLogout,
+  },
+];
 
 function Header() {
   const dispatch = useDispatch();
@@ -55,7 +68,7 @@ function Header() {
 
   function logoutUser() {
     localStorage.clear();
-    window.location.href = "/";
+    window.location.reload();
   }
 
   return (
@@ -77,27 +90,38 @@ function Header() {
               <h2 className="font-semibold text-lg">{JSON.parse(localStorage.getItem('user'))?.nama_lengkap || ''}</h2>
               <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
                 <div className="w-10 rounded-full">
-                  <img src={profileImageUrl} alt="profile" />
+                  <img src={profilDefault} alt="profile" />
                 </div>
               </label>
             </div>
             <ul
               tabIndex={0}
-              className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
+              className="menu-compact menu dropdown-content mt-3 w-52 overflow-hidden rounded-box bg-base-100 px-0 py-2 text-sm font-medium text-black-secondary shadow"
             >
-              <li className="justify-between">
-                <Link to={"/app/settings-profile"}>
-                  Profile Settings
-                  <span className="badge">New</span>
-                </Link>
-              </li>
-              <li>
-                <Link to={"/app/settings-billing"}>Bill History</Link>
-              </li>
-              <div className="divider mt-0 mb-0"></div>
-              <li>
-                <a onClick={logoutUser}>Logout</a>
-              </li>
+              {dropdownLinks.map((item, i) => {
+                const { path, title, icon } = item;
+                return (
+                  <>
+                    <li className="">
+                      {path ? (
+                        <Link to={path} className="rounded-none py-[10px] hover:!bg-gray-200 active:!bg-gray-300 active:!text-secondary">
+                          <img src={icon} alt="" className='w-4 h-4' />
+                          {title}
+                        </Link>
+                      ) : (
+                        <button className="rounded-none py-[10px] text-[#AB3027] hover:!bg-gray-200 active:!bg-gray-300 active:!text-[#AB3027]" type="button" 
+                        onClick={logoutUser}>
+                          <img src={icon} alt="" className='w-4 h-4' />
+                          {title}
+                        </button>
+                      )}
+                    </li>
+                    {i !== dropdownLinks.length - 1 ? (
+                      <div className="h-[1px] w-full bg-base-300"></div>
+                    ) : null}
+                  </>
+                );
+              })}
             </ul>
           </div>
         </div>

@@ -1,9 +1,4 @@
 import { ArrowRightCircleIcon } from "@heroicons/react/24/outline";
-import UsersIcon from "@heroicons/react/24/outline/UsersIcon";
-import fileSearchIconPath from "../assets/icons/file-search.svg";
-import calendar from "../assets/icons/calendar.svg";
-import FilePlus from "../assets/icons/file-plus.svg";
-import compass from "../assets/icons/compass.svg";
 import dashboard from "../assets/icons/dashboard.svg";
 import membership from "../assets/icons/membership.svg";
 import fasilitas from "../assets/icons/fasilitas.svg";
@@ -20,54 +15,47 @@ const sidebarRoutes = [
   },
   {
     path: "", // no url needed as this has submenu
-    icon: <img src={membership} className={`${iconClasses} inline`} />, // icon component
-    name: "Membership", // name that appear in Sidebar
-    submenu: [
-      {
-        path: "/404",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 1",
-      },
-      {
-        path: "/404",
-        icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 2",
-      },
-    ],
-  },
-  {
-    path: "", // no url needed as this has submenu
     icon: <img src={bookingfasilitas} className={`${iconClasses} inline`} />, // icon component
     name: "Booking Fasilitas", // name that appear in Sidebar
     submenu: [
       {
-        path: "/404",
+        path: "/app/booking?page=1&limit=10",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 1",
+        name: "List Booking",
       },
       {
-        path: "/404",
+        path: "/app/booking/cari",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 2",
+        name: "Cari Booking",
       },
     ],
   },
   {
     path: "", // no url needed as this has submenu
-    icon: <img src={fasilitas} className={`${iconClasses} inline`} />, // icon component
-    name: "Fasilitas", // name that appear in Sidebar
+    icon: <img src={membership} className={`${iconClasses} inline`} />, // icon component
+    name: "Membership", // name that appear in Sidebar
     submenu: [
       {
-        path: "/404",
+        path: "/app/membership?page=1&limit=10",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 1",
+        name: "List Member",
       },
       {
-        path: "/404",
+        path: "/app/paket-membership",
         icon: <ArrowRightCircleIcon className={submenuIconClasses} />,
-        name: "Member 2",
+        name: "Paket Membership",
       },
     ],
+  },
+  {
+    path: "/app/fasilitas?page=1&limit=10", // unique path for Fasilitas
+    icon: <img src={fasilitas} className={`${iconClasses} inline`} />, // icon component
+    name: "Fasilitas", // name that appear in Sidebar
+  },
+  {
+    path: "/app/promo?page=1&limit=10", // unique path for Promo & Diskon
+    icon: <img src={promo} className={`${iconClasses} inline`} />, // icon component
+    name: "Promo & Diskon", // name that appear in Sidebar
   },
 ];
 
